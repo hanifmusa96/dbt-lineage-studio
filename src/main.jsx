@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
-  Background, BackgroundVariant, BaseEdge, Controls, getBezierPath, Handle, MarkerType, Position,
+  Background, BackgroundVariant, Controls, Handle, MarkerType, Position,
   ReactFlow, ReactFlowProvider, useNodesState, useReactFlow, useUpdateNodeInternals,
 } from '@xyflow/react';
 import {
@@ -11,7 +11,7 @@ import {
   Search, Table2, Upload, X,
 } from 'lucide-react';
 import { buildLineage, defaultResource, getNeighborhood } from './lineage.js';
-import { bezierRoute, layoutLineage } from './layout.js';
+import { layoutLineage } from './layout.js';
 import '@xyflow/react/dist/style.css';
 import './styles.css';
 
@@ -88,17 +88,6 @@ function ResourceNode({ id, data, selected }) {
 }
 const nodeTypes = { resource: ResourceNode };
 
-function RoutedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd, style }) {
-  const { sourcePoint, targetPoint } = data;
-  const moved = Math.abs(sourceX - sourcePoint.x) > 1 || Math.abs(sourceY - sourcePoint.y) > 1 ||
-    Math.abs(targetX - targetPoint.x) > 1 || Math.abs(targetY - targetPoint.y) > 1;
-  const path = moved
-    ? getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition })[0]
-    : bezierRoute(data.route, sourcePoint, targetPoint);
-  return <BaseEdge id={id} path={path} markerEnd={markerEnd} style={style} />;
-}
-const edgeTypes = { routed: RoutedEdge };
-
 function Canvas({ graph, rootId, selectedId, setSelectedId }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges] = useState([]);
@@ -139,9 +128,8 @@ function Canvas({ graph, rootId, selectedId, setSelectedId }) {
           onToggle: toggleBranch, ports: node.ports,
         },
       })));
-      setEdges(layout.edges.map(({ id, source, target, sourcePort, targetPort, route, sourcePoint, targetPoint }) => ({
-        id, source, target, sourceHandle: sourcePort, targetHandle: targetPort, type: 'routed',
-        data: { route, sourcePoint, targetPoint },
+      setEdges(layout.edges.map(({ id, source, target, sourcePort, targetPort }) => ({
+        id, source, target, sourceHandle: sourcePort, targetHandle: targetPort, type: 'default',
         markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: '#7d8fa8' },
         style: { stroke: '#7d8fa8', strokeWidth: 1.8 },
       })));
@@ -159,7 +147,7 @@ function Canvas({ graph, rootId, selectedId, setSelectedId }) {
 
   return (
     <div className="canvas">
-      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} onNodesChange={onNodesChange}
+      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange}
         onNodeClick={(_, node) => setSelectedId(node.id)} nodesConnectable={false}
         minZoom={0.05} maxZoom={1.8}>
         <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} color="#dce2e9" />
