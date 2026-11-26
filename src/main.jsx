@@ -44,6 +44,7 @@ function ResourceNode({ id, data, selected }) {
         <span className={`type-icon ${resource.type}`} title={resource.type}><ResourceIcon type={resource.type} size={14} /></span>
         <div className="node-heading">
           <strong title={resource.name}>{resource.name}</strong>
+          {resource.materialization && <span title={resource.materialization}>{resource.materialization}</span>}
         </div>
       </div>
       {control('downstream', downstreamCount)}
