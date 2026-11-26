@@ -4,10 +4,26 @@ const elk = new ELK();
 const NODE_WIDTH = 200;
 const MIN_NODE_HEIGHT = 52;
 
-export function bezierRoute({ startPoint, endPoint, bendPoints = [] }) {
+export function bezierRoute({ startPoint, endPoint, bendPoints = [] }, sourcePoint = startPoint, targetPoint = endPoint) {
   const points = [startPoint, ...bendPoints, endPoint]
     .filter((point, i, all) => i === 0 || point.x !== all[i - 1].x || point.y !== all[i - 1].y);
-  const path = [`M ${startPoint.x} ${startPoint.y}`];
+  if (points.length < 2) return `M ${sourcePoint.x} ${sourcePoint.y} L ${targetPoint.x} ${targetPoint.y}`;
+  const trim = (point, next) => {
+    const length = Math.hypot(next.x - point.x, next.y - point.y);
+    const distance = Math.min(12, length / 2);
+    return { x: point.x + (next.x - point.x) * distance / length, y: point.y + (next.y - point.y) * distance / length };
+  };
+  const startChanged = sourcePoint.x !== startPoint.x || sourcePoint.y !== startPoint.y;
+  const endChanged = targetPoint.x !== endPoint.x || targetPoint.y !== endPoint.y;
+  const start = startChanged ? trim(points[0], points[1]) : points[0];
+  const end = endChanged ? trim(points[points.length - 1], points[points.length - 2]) : points[points.length - 1];
+  points[0] = start;
+  points[points.length - 1] = end;
+  const path = [`M ${sourcePoint.x} ${sourcePoint.y}`];
+  if (startChanged) {
+    const midX = (sourcePoint.x + start.x) / 2;
+    path.push(`C ${midX} ${sourcePoint.y} ${midX} ${start.y} ${start.x} ${start.y}`);
+  }
   for (let i = 1; i < points.length - 1; i++) {
     const previous = points[i - 1];
     const corner = points[i];
@@ -27,7 +43,11 @@ export function bezierRoute({ startPoint, endPoint, bendPoints = [] }) {
     const control2 = { x: after.x + (corner.x - after.x) * 2 / 3, y: after.y + (corner.y - after.y) * 2 / 3 };
     path.push(`L ${before.x} ${before.y} C ${control1.x} ${control1.y} ${control2.x} ${control2.y} ${after.x} ${after.y}`);
   }
-  path.push(`L ${endPoint.x} ${endPoint.y}`);
+  path.push(`L ${end.x} ${end.y}`);
+  if (endChanged) {
+    const midX = (end.x + targetPoint.x) / 2;
+    path.push(`C ${midX} ${end.y} ${midX} ${targetPoint.y} ${targetPoint.x} ${targetPoint.y}`);
+  }
   return path.join(' ');
 }
 
@@ -71,17 +91,24 @@ export async function layoutLineage(neighborhood) {
     edges: edges.map((edge) => ({ id: edge.id, sources: [edge.sourcePort], targets: [edge.targetPort] })),
   });
   const laidOutEdges = new Map(layout.edges.map((edge) => [edge.id, edge]));
+  const laidOutNodes = new Map(layout.children.map((node) => [node.id, node]));
   return {
     nodes: layout.children.map((node) => ({
       id: node.id, x: node.x, y: node.y, width: node.width, height: node.height,
       ports: node.ports.map((port) => ({
-        ...ports.get(node.id).find((item) => item.id === port.id), y: port.y,
+        ...ports.get(node.id).find((item) => item.id === port.id), y: node.height / 2,
       })),
     })),
     edges: edges.map((edge) => {
       const sections = laidOutEdges.get(edge.id)?.sections;
       if (!sections || sections.length !== 1) throw new Error(`Missing route for edge ${edge.id}`);
-      return { ...edge, route: sections[0] };
+      const source = laidOutNodes.get(edge.source);
+      const target = laidOutNodes.get(edge.target);
+      return {
+        ...edge, route: sections[0],
+        sourcePoint: { x: source.x + source.width, y: source.y + source.height / 2 },
+        targetPoint: { x: target.x, y: target.y + target.height / 2 },
+      };
     }),
   };
 }

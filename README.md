@@ -14,7 +14,7 @@ Search for a resource, select it to focus its graph, and click a graph node for 
 
 Nodes show the resource name and its materialization when available. Hover over or focus a name to see it in full.
 
-ELK routes connections around nodes with separate attachment points and curved Bézier bends. Dragging a node keeps its connections attached; expanding or folding a branch recalculates the layout and routes.
+ELK routes connections around nodes with shared incoming and outgoing attachment points and curved Bézier bends. Dragging a node keeps its connections attached; expanding or folding a branch recalculates the layout and routes.
 
 Connections are dbt **resource dependencies**, not column-level lineage. The manifest and catalog alone do not provide verified column-to-column transformations. Tests are excluded from the graph.
 

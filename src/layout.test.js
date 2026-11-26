@@ -26,23 +26,39 @@ test("handles straight routes and duplicate bend points", () => {
     assert.equal(bezierRoute({ startPoint: { x: 0, y: 1 }, endPoint: { x: 4, y: 1 } }), "M 0 1 L 4 1");
 });
 
-test("routes a fan-out through distinct, spaced ports", async () => {
+test("connects a fan-out at one point while keeping distinct routes", async () => {
     const targets = Array.from({ length: 10 }, (_, i) => `target${i}`);
     const layout = await layoutLineage({
         ids: ["root", ...targets],
         edges: targets.map((target) => ({ source: "root", target })),
     });
     const root = layout.nodes.find((node) => node.id === "root");
-    const outgoing = root.ports.filter((port) => port.type === "source").sort((a, b) => a.y - b.y);
+    const outgoing = root.ports.filter((port) => port.type === "source");
     assert.equal(outgoing.length, 10);
-    assert.ok(root.height > 52);
-    for (let i = 1; i < outgoing.length; i++) {
-        assert.ok(outgoing[i].y - outgoing[i - 1].y >= 7.9);
-    }
+    assert.ok(outgoing.every((port) => port.y === root.height / 2));
+    assert.ok(layout.edges.every((edge) => edge.sourcePoint.x === root.x + root.width && edge.sourcePoint.y === root.y + root.height / 2));
     assert.equal(new Set(layout.edges.map((edge) => edge.route.startPoint.y)).size, 10);
+    const paths = layout.edges.map((edge) => bezierRoute(edge.route, edge.sourcePoint, edge.targetPoint));
+    assert.equal(new Set(paths).size, 10);
+    assert.ok(paths.every((path) => path.startsWith(`M ${root.x + root.width} ${root.y + root.height / 2} `)));
     for (const edge of layout.edges) {
         assert.ok(edge.route.startPoint);
         assert.ok(edge.route.endPoint);
+    }
+});
+
+test("connects fan-in edges to one point and keeps routes after relayout", async () => {
+    const sources = ["a", "b", "c"];
+    const edges = sources.map((source) => ({ source, target: "root" }));
+    for (const selectedEdges of [edges, edges.slice(0, 2)]) {
+        const layout = await layoutLineage({ ids: ["root", ...sources], edges: selectedEdges });
+        const root = layout.nodes.find((node) => node.id === "root");
+        const incoming = root.ports.filter((port) => port.type === "target");
+        assert.ok(incoming.every((port) => port.y === root.height / 2));
+        for (const edge of layout.edges) {
+            assert.deepEqual(edge.targetPoint, { x: root.x, y: root.y + root.height / 2 });
+            assert.ok(bezierRoute(edge.route, edge.sourcePoint, edge.targetPoint).endsWith(`${root.x} ${root.y + root.height / 2}`));
+        }
     }
 });
 

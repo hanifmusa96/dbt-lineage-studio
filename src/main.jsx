@@ -89,12 +89,12 @@ function ResourceNode({ id, data, selected }) {
 const nodeTypes = { resource: ResourceNode };
 
 function RoutedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd, style }) {
-  const { startPoint, endPoint } = data.route;
-  const moved = Math.abs(sourceX - startPoint.x) > 1 || Math.abs(sourceY - startPoint.y) > 1 ||
-    Math.abs(targetX - endPoint.x) > 1 || Math.abs(targetY - endPoint.y) > 1;
+  const { sourcePoint, targetPoint } = data;
+  const moved = Math.abs(sourceX - sourcePoint.x) > 1 || Math.abs(sourceY - sourcePoint.y) > 1 ||
+    Math.abs(targetX - targetPoint.x) > 1 || Math.abs(targetY - targetPoint.y) > 1;
   const path = moved
     ? getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition })[0]
-    : bezierRoute(data.route);
+    : bezierRoute(data.route, sourcePoint, targetPoint);
   return <BaseEdge id={id} path={path} markerEnd={markerEnd} style={style} />;
 }
 const edgeTypes = { routed: RoutedEdge };
@@ -139,9 +139,9 @@ function Canvas({ graph, rootId, selectedId, setSelectedId }) {
           onToggle: toggleBranch, ports: node.ports,
         },
       })));
-      setEdges(layout.edges.map(({ id, source, target, sourcePort, targetPort, route }) => ({
+      setEdges(layout.edges.map(({ id, source, target, sourcePort, targetPort, route, sourcePoint, targetPoint }) => ({
         id, source, target, sourceHandle: sourcePort, targetHandle: targetPort, type: 'routed',
-        data: { route },
+        data: { route, sourcePoint, targetPoint },
         markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: '#7d8fa8' },
         style: { stroke: '#7d8fa8', strokeWidth: 1.8 },
       })));
