@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
-  Background, BackgroundVariant, Controls, Handle, MarkerType, Position,
+  Background, BackgroundVariant, Controls, Handle, MarkerType, MiniMap, Position,
   ReactFlow, ReactFlowProvider, useNodesState, useReactFlow, useUpdateNodeInternals,
 } from '@xyflow/react';
 import {
   ArrowUpRight, Boxes, ChevronDown, CircleHelp,
-  Database, FileJson, Filter, GitBranch, Layers2, Maximize2, Network, PanelLeftClose,
-  Search, Table2, Upload, X,
+  Database, FileJson, Filter, GitBranch, Layers2, Map, Maximize2, Moon, Network, PanelLeftClose,
+  Search, Sun, Table2, Upload, X,
 } from 'lucide-react';
 import { buildLineage, defaultResource, getNeighborhood } from './lineage.js';
 import { layoutLineage } from './layout.js';
@@ -87,12 +87,17 @@ function ResourceNode({ id, data, selected }) {
   );
 }
 const nodeTypes = { resource: ResourceNode };
+const minimapNodeColor = (node) => {
+  if (node.data.isRoot) return '#8183ef';
+  return { source: '#43b696', seed: '#d99b4c', exposure: '#d77f9d' }[node.data.resource.type] || '#a3a8c1';
+};
 
-function Canvas({ graph, rootId, selectedId, setSelectedId }) {
+function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges] = useState([]);
   const [layoutError, setLayoutError] = useState('');
   const [layingOut, setLayingOut] = useState(false);
+  const [showMinimap, setShowMinimap] = useState(true);
   const [expanded, setExpanded] = useState(() => ({
     upstream: new Set([rootId]),
     downstream: new Set([rootId]),
@@ -149,15 +154,22 @@ function Canvas({ graph, rootId, selectedId, setSelectedId }) {
     <div className="canvas">
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange}
         onNodeClick={(_, node) => setSelectedId(node.id)} nodesConnectable={false}
-        minZoom={0.05} maxZoom={1.8}>
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} color="#dce2e9" />
+        minZoom={0.05} maxZoom={1.8} colorMode={theme}>
+        <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} color={theme === 'dark' ? '#34445a' : '#dce2e9'} />
         <Controls showInteractive={false} position="bottom-left" />
+        {rootId && showMinimap && <MiniMap ariaLabel="Lineage minimap" pannable zoomable nodeColor={minimapNodeColor}
+          bgColor={theme === 'dark' ? '#1b273a' : '#ffffff'}
+          maskColor={theme === 'dark' ? '#0d1523a6' : '#e5e9f080'}
+          maskStrokeColor={theme === 'dark' ? '#a5b2c6' : '#8493aa'} maskStrokeWidth={2} />}
       </ReactFlow>
       <div className="canvas-overlay"><span className="live-dot" /> INTERACTIVE LINEAGE <span className="overlay-divider" /> {neighborhood.ids.length} nodes <span>·</span> {neighborhood.edges.length} connections</div>
       {(layingOut || layoutError || neighborhood.truncated) && <div className={`canvas-notice ${layoutError ? 'error' : ''}`}>
         {layoutError || (layingOut ? 'Arranging your lineage…' : 'Graph limited to 100 nodes. Select a closer resource to explore more.')}
       </div>}
       {!rootId && <div className="empty-canvas"><Network size={30} /><strong>No resources found</strong><span>Load a manifest containing supported dbt resources.</span></div>}
+      {rootId && <button className="minimap-toggle" aria-label={`${showMinimap ? 'Hide' : 'Show'} minimap`}
+        aria-pressed={showMinimap} title={`${showMinimap ? 'Hide' : 'Show'} minimap`}
+        onClick={() => setShowMinimap((current) => !current)}><Map size={16} /></button>}
       <div className="canvas-hint">Scroll to zoom <span>·</span> Drag to pan</div>
       <button className="fit-button" onClick={() => fitView({ padding: 0.22, maxZoom: 1, duration: 350 })} title="Fit graph" aria-label="Fit graph"><Maximize2 size={16} /></button>
     </div>
@@ -165,6 +177,14 @@ function Canvas({ graph, rootId, selectedId, setSelectedId }) {
 }
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('lineage-theme') === 'dark' ? 'dark' : 'light';
+    } catch (error) {
+      console.warn('Could not read the saved theme preference:', error);
+      return 'light';
+    }
+  });
   const [graph, setGraph] = useState(null);
   const [rootId, setRootId] = useState('');
   const [selectedId, setSelectedId] = useState('');
@@ -226,14 +246,26 @@ function App() {
   const selected = graph?.resources[selectedId];
   const root = graph?.resources[rootId];
   const focus = (id) => { setRootId(id); setSelectedId(''); setGraphVersion((version) => version + 1); };
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    try {
+      localStorage.setItem('lineage-theme', next);
+    } catch (error) {
+      console.warn('Could not save the theme preference:', error);
+    }
+  };
 
-  return <div className="app">
+  return <div className="app" data-theme={theme}>
     <header className="topbar">
       <div className="brand"><div className="brand-mark"><GitBranch size={19} /></div><div><strong>lineage<span>studio</span></strong><small>YOUR DATA, CONNECTED</small></div></div>
       <div className="topbar-divider" />
       <div className="workspace-label"><span className="workspace-icon"><Boxes size={15} /></span><span>{graph?.metadata.project_name || 'dbt project'}<small>Workspace</small></span><ChevronDown size={14} /></div>
       <div className="topbar-spacer" />
       <div className="local-badge"><span className="live-dot" /> Local workspace</div>
+      <button className="theme-button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+        {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
+      </button>
       <button className="import-button" onClick={() => { setShowImport(true); setError(''); }}><Upload size={15} /> Import artifacts</button>
       <div className="avatar">LS</div>
     </header>
@@ -268,7 +300,7 @@ function App() {
             <div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>{root ? `Exploring ${root.name}` : 'Select a resource to explore'}</small></div></div>
             <div className="branch-hint">Use + / − on nodes to expand or fold lineage</div>
           </div>
-          {graph ? <ReactFlowProvider key={graphVersion}><Canvas graph={graph} rootId={rootId} selectedId={selectedId} setSelectedId={setSelectedId} /></ReactFlowProvider> : <div className="loading-state"><Network size={32} /><strong>{status || 'No artifacts loaded'}</strong><span>{error || 'Preparing your lineage graph'}</span><button onClick={() => setShowImport(true)}>Import artifacts</button></div>}
+          {graph ? <ReactFlowProvider key={graphVersion}><Canvas graph={graph} rootId={rootId} selectedId={selectedId} setSelectedId={setSelectedId} theme={theme} /></ReactFlowProvider> : <div className="loading-state"><Network size={32} /><strong>{status || 'No artifacts loaded'}</strong><span>{error || 'Preparing your lineage graph'}</span><button onClick={() => setShowImport(true)}>Import artifacts</button></div>}
           <div className="graph-legend"><span>LEGEND</span><span><i className="legend-icon source"><Database size={12} /></i> Source</span><span><i className="legend-icon model"><Layers2 size={12} /></i> Model</span><span><i className="legend-icon seed"><Table2 size={12} /></i> Seed</span><span><i className="legend-icon exposure"><ArrowUpRight size={12} /></i> Exposure</span><div className="legend-spacer" /><span>Model-level lineage</span></div>
         </div>
         <div className="page-foot"><span>Built for a clearer view of your data.</span><span>Data stays in your local workspace <span className="heart">✦</span></span></div>

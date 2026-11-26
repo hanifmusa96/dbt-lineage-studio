@@ -1305,3 +1305,204 @@ select:focus-visible {
 .branch-downstream {
     right: 10px;
 }
+.theme-button,
+.minimap-toggle {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #e0e5ed;
+    border-radius: 8px;
+    background: #fff;
+    color: #697589;
+}
+.theme-button:hover,
+.minimap-toggle:hover {
+    background: #f7f8fb;
+}
+.minimap-toggle {
+    position: absolute;
+    z-index: 5;
+    top: 12px;
+    right: 16px;
+}
+.minimap-toggle[aria-pressed="true"] {
+    color: #6264df;
+}
+.react-flow .react-flow__minimap {
+    width: 160px;
+    height: 100px;
+    right: 2px;
+    bottom: 48px;
+    border: 1px solid #e4e9f0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px #2b3d5112;
+}
+@media (max-width: 600px) {
+    .react-flow .react-flow__minimap {
+        width: 110px;
+        height: 70px;
+    }
+}
+
+.app[data-theme="dark"] {
+    color-scheme: dark;
+    color: #dce5f2;
+    background: #111827;
+}
+.app[data-theme="dark"] .topbar,
+.app[data-theme="dark"] .rail,
+.app[data-theme="dark"] .sidebar,
+.app[data-theme="dark"] .details,
+.app[data-theme="dark"] .graph-card,
+.app[data-theme="dark"] .modal {
+    background: #192435;
+    border-color: #344357;
+}
+.app[data-theme="dark"] .brand strong,
+.app[data-theme="dark"] .workspace-label,
+.app[data-theme="dark"] .sidebar h2,
+.app[data-theme="dark"] .title-row h1,
+.app[data-theme="dark"] .graph-title strong,
+.app[data-theme="dark"] .details h2,
+.app[data-theme="dark"] .modal h2,
+.app[data-theme="dark"] .node-heading strong {
+    color: #e8eef8;
+}
+.app[data-theme="dark"] .topbar-divider,
+.app[data-theme="dark"] .overlay-divider {
+    background: #344357;
+}
+.app[data-theme="dark"] .list-heading,
+.app[data-theme="dark"] .sidebar-footer,
+.app[data-theme="dark"] .graph-toolbar,
+.app[data-theme="dark"] .graph-legend,
+.app[data-theme="dark"] .detail-section,
+.app[data-theme="dark"] .column-row {
+    border-color: #344357;
+}
+.app[data-theme="dark"] .resource-item,
+.app[data-theme="dark"] .detail-section dd,
+.app[data-theme="dark"] .column-row strong,
+.app[data-theme="dark"] .breadcrumbs span:last-child,
+.app[data-theme="dark"] .filter-row select,
+.app[data-theme="dark"] .file-label,
+.app[data-theme="dark"] .empty-canvas strong,
+.app[data-theme="dark"] .loading-state strong {
+    color: #c8d3e2;
+}
+.app[data-theme="dark"] .node-heading span,
+.app[data-theme="dark"] .local-badge,
+.app[data-theme="dark"] .page-foot,
+.app[data-theme="dark"] .branch-hint,
+.app[data-theme="dark"] .canvas-hint {
+    color: #a7b5c8;
+}
+.app[data-theme="dark"] .import-button,
+.app[data-theme="dark"] .theme-button,
+.app[data-theme="dark"] .minimap-toggle,
+.app[data-theme="dark"] .fit-button,
+.app[data-theme="dark"] .branch-control {
+    background: #233147;
+    border-color: #43536b;
+    color: #d5deed;
+}
+.app[data-theme="dark"] .import-button:hover,
+.app[data-theme="dark"] .theme-button:hover,
+.app[data-theme="dark"] .minimap-toggle:hover,
+.app[data-theme="dark"] .icon-button:hover,
+.app[data-theme="dark"] .resource-item:hover,
+.app[data-theme="dark"] .branch-control:hover {
+    background: #304158;
+}
+.app[data-theme="dark"] .resource-item.active,
+.app[data-theme="dark"] .rail-button.active {
+    color: #c0c3ff;
+    background: #34365e;
+}
+.app[data-theme="dark"] .search-box,
+.app[data-theme="dark"] .file-label input,
+.app[data-theme="dark"] .react-flow__controls,
+.app[data-theme="dark"] .react-flow__minimap {
+    border-color: #43536b;
+}
+.app[data-theme="dark"] .search-box input {
+    background: transparent;
+    color: #e8eef8;
+}
+.app[data-theme="dark"] .workspace-icon,
+.app[data-theme="dark"] .title-icon,
+.app[data-theme="dark"] .graph-icon,
+.app[data-theme="dark"] .footer-icon,
+.app[data-theme="dark"] .list-icon,
+.app[data-theme="dark"] .type-icon,
+.app[data-theme="dark"] .detail-icon,
+.app[data-theme="dark"] .legend-icon,
+.app[data-theme="dark"] .type-label,
+.app[data-theme="dark"] .beta,
+.app[data-theme="dark"] .detail-section h3 span,
+.app[data-theme="dark"] .file-label input::file-selector-button,
+.app[data-theme="dark"] .focus-button,
+.app[data-theme="dark"] .loading-state button {
+    background: #34365e;
+    color: #c0c3ff;
+}
+.app[data-theme="dark"] .source {
+    background: #173c36 !important;
+    color: #75ddbd !important;
+}
+.app[data-theme="dark"] .seed {
+    background: #493922 !important;
+    color: #f1c379 !important;
+}
+.app[data-theme="dark"] .exposure {
+    background: #482c3d !important;
+    color: #f0a2be !important;
+}
+.app[data-theme="dark"] .count-pill,
+.app[data-theme="dark"] .avatar,
+.app[data-theme="dark"] .rail-avatar,
+.app[data-theme="dark"] .details-note,
+.app[data-theme="dark"] .modal code {
+    background: #263449;
+    color: #bdc9d9;
+}
+.app[data-theme="dark"] .graph-node {
+    background: #233147;
+    border-color: #43536b;
+}
+.app[data-theme="dark"] .graph-node.node-root {
+    border-top-color: #9c9eff;
+}
+.app[data-theme="dark"] .graph-node:hover,
+.app[data-theme="dark"] .graph-node.node-selected {
+    border-color: #a8aaff;
+}
+.app[data-theme="dark"] .canvas,
+.app[data-theme="dark"] .react-flow {
+    background: #111b2b;
+    --xy-background-color: #111b2b;
+}
+.app[data-theme="dark"] .react-flow__controls button {
+    background: #233147;
+    border-color: #43536b !important;
+}
+.app[data-theme="dark"] .react-flow__controls button:hover {
+    background: #304158;
+}
+.app[data-theme="dark"] .react-flow__controls button svg {
+    fill: #c8d3e2 !important;
+}
+.app[data-theme="dark"] .canvas-notice {
+    background: #493922;
+    border-color: #846c38;
+    color: #f5d496;
+}
+.app[data-theme="dark"] .canvas-notice.error,
+.app[data-theme="dark"] .form-error {
+    background: #482a33;
+    border-color: #90505c;
+    color: #ffc0c8;
+}

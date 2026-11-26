@@ -14,6 +14,8 @@ Search for a resource, select it to focus its graph, and click a graph node for 
 
 Nodes show the resource name and its materialization when available. Hover over or focus a name to see it in full.
 
+Use the minimap to pan or zoom around the graph; use the map button to show or hide it. The header theme button switches between light and dark mode and saves the choice in browser storage.
+
 ELK positions the nodes; React Flow draws Bézier edges from shared incoming and outgoing attachment points. Dragging a node keeps its connections attached; expanding or folding a branch recalculates the layout. Curves may cross nodes or other edges in complex graphs.
 
 Connections are dbt **resource dependencies**, not column-level lineage. The manifest and catalog alone do not provide verified column-to-column transformations. Tests are excluded from the graph.
