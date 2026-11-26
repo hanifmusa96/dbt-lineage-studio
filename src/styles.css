@@ -746,6 +746,20 @@ select:focus-visible {
     color: #6f7a8a;
     margin-top: 2px;
 }
+.node-name-tooltip {
+    position: fixed;
+    z-index: 20;
+    max-width: min(320px, calc(100vw - 16px));
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #273448;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+    box-shadow: 0 4px 12px #27344833;
+}
 .node-menu {
     font-size: 19px;
     color: #b1bac8;

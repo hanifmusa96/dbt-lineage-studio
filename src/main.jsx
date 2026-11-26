@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
   Background, BackgroundVariant, BaseEdge, Controls, getBezierPath, Handle, MarkerType, Position,
@@ -23,8 +24,29 @@ function ResourceIcon({ type, size = 16 }) {
 
 function ResourceNode({ id, data, selected }) {
   const { resource, isRoot, upstreamCount, downstreamCount, expanded, onToggle, ports } = data;
+  const tooltipId = useId();
+  const [tooltip, setTooltip] = useState(null);
   const updateNodeInternals = useUpdateNodeInternals();
   useEffect(() => { updateNodeInternals(id); }, [id, ports, updateNodeInternals]);
+  useEffect(() => {
+    if (!tooltip) return;
+    const hide = () => setTooltip(null);
+    window.addEventListener('wheel', hide, { passive: true });
+    window.addEventListener('resize', hide);
+    return () => {
+      window.removeEventListener('wheel', hide);
+      window.removeEventListener('resize', hide);
+    };
+  }, [tooltip]);
+  const showTooltip = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const above = rect.top > window.innerHeight / 2;
+    setTooltip({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - 328)),
+      top: above ? rect.top - 8 : rect.bottom + 8,
+      above,
+    });
+  };
   const control = (direction, count) => count > 0 && (
     <button
       className={`branch-control branch-${direction} nodrag nopan`}
@@ -43,11 +65,24 @@ function ResourceNode({ id, data, selected }) {
       <div className="node-top">
         <span className={`type-icon ${resource.type}`} title={resource.type}><ResourceIcon type={resource.type} size={14} /></span>
         <div className="node-heading">
-          <strong title={resource.name}>{resource.name}</strong>
+          <strong tabIndex={0} aria-describedby={tooltip ? tooltipId : undefined}
+            onMouseEnter={showTooltip} onMouseLeave={() => setTooltip(null)}
+            onFocus={showTooltip} onBlur={() => setTooltip(null)}
+            onPointerDown={() => setTooltip(null)}
+            onKeyDown={(event) => { if (event.key === 'Escape') setTooltip(null); }}>
+            {resource.name}
+          </strong>
           {resource.materialization && <span title={resource.materialization}>{resource.materialization}</span>}
         </div>
       </div>
       {control('downstream', downstreamCount)}
+      {tooltip && createPortal(
+        <div id={tooltipId} role="tooltip" className="node-name-tooltip"
+          style={{ left: tooltip.left, top: tooltip.top, transform: tooltip.above ? 'translateY(-100%)' : undefined }}>
+          {resource.name}
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

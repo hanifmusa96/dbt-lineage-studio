@@ -12,7 +12,7 @@ The app loads the two local files automatically. You can also import another pai
 
 Search for a resource, select it to focus its graph, and click a graph node for metadata. Use the **+ / −** buttons on the left and right of a node to expand or fold its upstream and downstream connections. Shared resources remain visible while connected through another expanded branch; reopening a branch restores its previous expansions. Graphs are limited to 100 nodes to keep large projects responsive; focus another resource to continue exploring.
 
-Nodes show the resource name and its materialization when available.
+Nodes show the resource name and its materialization when available. Hover over or focus a name to see it in full.
 
 ELK routes connections around nodes with separate attachment points and curved Bézier bends. Dragging a node keeps its connections attached; expanding or folding a branch recalculates the layout and routes.
 
