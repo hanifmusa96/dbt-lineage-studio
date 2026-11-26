@@ -7,10 +7,11 @@ import {
 } from '@xyflow/react';
 import {
   ArrowUpRight, Boxes, ChevronDown, CircleHelp,
-  Database, FileJson, Filter, GitBranch, Layers2, Map, Maximize2, Moon, Network, PanelLeftClose,
+  Database, Download, FileJson, Filter, GitBranch, Layers2, Map as MapIcon, Maximize2, Moon, Network, PanelLeftClose,
   Search, Sun, Table2, Upload, X,
 } from 'lucide-react';
 import { buildLineage, defaultResource, getNeighborhood } from './lineage.js';
+import { createExportGraph, exportMermaid, exportSvg } from './export.js';
 import { layoutLineage } from './layout.js';
 import '@xyflow/react/dist/style.css';
 import './styles.css';
@@ -96,6 +97,8 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges] = useState([]);
   const [layoutError, setLayoutError] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [exportFormat, setExportFormat] = useState('svg');
   const [layingOut, setLayingOut] = useState(false);
   const [showMinimap, setShowMinimap] = useState(true);
   const [expanded, setExpanded] = useState(() => ({
@@ -103,6 +106,7 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
     downstream: new Set([rootId]),
   }));
   const selectedRef = useRef(selectedId);
+  const canvasRef = useRef(null);
   selectedRef.current = selectedId;
   const toggleBranch = useCallback((id, direction) => {
     setExpanded((current) => {
@@ -112,8 +116,57 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
       return { ...current, [direction]: branch };
     });
   }, []);
-  const { fitView } = useReactFlow();
+  const { fitView, getNodes } = useReactFlow();
   const neighborhood = useMemo(() => getNeighborhood(graph, rootId, expanded), [graph, rootId, expanded]);
+  const readyToExport = !layingOut && !layoutError && neighborhood.ids.length > 0 &&
+    nodes.length === neighborhood.ids.length && edges.length === neighborhood.edges.length &&
+    neighborhood.ids.every((id) => nodes.some((node) => node.id === id)) &&
+    neighborhood.edges.every(({ source, target }) => edges.some((edge) => edge.source === source && edge.target === target));
+
+  const exportLineage = () => {
+    setExportError('');
+    try {
+      const snapshot = createExportGraph(graph, rootId, neighborhood, getNodes());
+      let content;
+      let type;
+      let extension;
+      if (exportFormat === 'json') {
+        content = JSON.stringify(snapshot, null, 2);
+        type = 'application/json';
+        extension = 'json';
+      } else if (exportFormat === 'mermaid') {
+        content = exportMermaid(snapshot);
+        type = 'text/plain';
+        extension = 'mmd';
+      } else {
+        const pathElements = new Map(
+          [...canvasRef.current.querySelectorAll('.react-flow__edge')].map((element) => [
+            element.getAttribute('data-id'), element.querySelector('.react-flow__edge-path'),
+          ]),
+        );
+        const paths = edges.map((edge) => {
+          const element = pathElements.get(edge.id);
+          if (!element || !element.getAttribute('d')) throw new Error('Some edges are not ready to export. Please try again.');
+          const { x, y, width, height } = element.getBBox();
+          return { d: element.getAttribute('d'), bounds: { x, y, width, height } };
+        });
+        content = exportSvg(snapshot, paths, theme);
+        type = 'image/svg+xml';
+        extension = 'svg';
+      }
+      const url = URL.createObjectURL(new Blob([content], { type }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `lineage.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Lineage export failed:', error);
+      setExportError(`Could not export lineage: ${error.message}`);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -151,7 +204,17 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
   }, [selectedId, setNodes]);
 
   return (
-    <div className="canvas">
+    <>
+    <div className="graph-toolbar">
+      <div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>{rootId ? `Exploring ${graph.resources[rootId].name}` : 'Select a resource to explore'}</small></div></div>
+      <div className="export-controls">
+        <select aria-label="Export format" value={exportFormat} onChange={(event) => setExportFormat(event.target.value)}>
+          <option value="svg">SVG</option><option value="json">JSON</option><option value="mermaid">Mermaid</option>
+        </select>
+        <button onClick={exportLineage} disabled={!readyToExport}><Download size={15} /> Export</button>
+      </div>
+    </div>
+    <div className="canvas" ref={canvasRef}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange}
         onNodeClick={(_, node) => setSelectedId(node.id)} nodesConnectable={false}
         minZoom={0.05} maxZoom={1.8} colorMode={theme}>
@@ -163,16 +226,17 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
           maskStrokeColor={theme === 'dark' ? '#a5b2c6' : '#8493aa'} maskStrokeWidth={2} />}
       </ReactFlow>
       <div className="canvas-overlay"><span className="live-dot" /> INTERACTIVE LINEAGE <span className="overlay-divider" /> {neighborhood.ids.length} nodes <span>·</span> {neighborhood.edges.length} connections</div>
-      {(layingOut || layoutError || neighborhood.truncated) && <div className={`canvas-notice ${layoutError ? 'error' : ''}`}>
-        {layoutError || (layingOut ? 'Arranging your lineage…' : 'Graph limited to 100 nodes. Select a closer resource to explore more.')}
+      {(layingOut || layoutError || exportError || neighborhood.truncated) && <div role={layoutError || exportError ? 'alert' : undefined} className={`canvas-notice ${layoutError || exportError ? 'error' : ''}`}>
+        {layoutError || exportError || (layingOut ? 'Arranging your lineage…' : 'Graph limited to 100 nodes. Select a closer resource to explore more.')}
       </div>}
       {!rootId && <div className="empty-canvas"><Network size={30} /><strong>No resources found</strong><span>Load a manifest containing supported dbt resources.</span></div>}
       {rootId && <button className="minimap-toggle" aria-label={`${showMinimap ? 'Hide' : 'Show'} minimap`}
         aria-pressed={showMinimap} title={`${showMinimap ? 'Hide' : 'Show'} minimap`}
-        onClick={() => setShowMinimap((current) => !current)}><Map size={16} /></button>}
+        onClick={() => setShowMinimap((current) => !current)}><MapIcon size={16} /></button>}
       <div className="canvas-hint">Scroll to zoom <span>·</span> Drag to pan</div>
       <button className="fit-button" onClick={() => fitView({ padding: 0.22, maxZoom: 1, duration: 350 })} title="Fit graph" aria-label="Fit graph"><Maximize2 size={16} /></button>
     </div>
+    </>
   );
 }
 
@@ -244,7 +308,6 @@ function App() {
       (!query || [item.name, item.schema, item.packageName, item.sourceName, item.id].some((value) => value.toLowerCase().includes(query))));
   }, [resources, search, filter]);
   const selected = graph?.resources[selectedId];
-  const root = graph?.resources[rootId];
   const focus = (id) => { setRootId(id); setSelectedId(''); setGraphVersion((version) => version + 1); };
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light';
@@ -296,11 +359,7 @@ function App() {
           <div className="title-row"><div><div className="title-with-icon"><span className="title-icon"><Network size={20} /></span><h1>Lineage explorer</h1><span className="beta">LOCAL</span></div><p>Understand how your data flows, from source to insight.</p></div><div className="heading-summary"><span><i className="summary-dot model-dot" /> {counts.model?.toLocaleString() || 0} models</span><span><i className="summary-dot source-dot" /> {counts.source?.toLocaleString() || 0} sources</span></div></div>
         </div>
         <div className="graph-card">
-          <div className="graph-toolbar">
-            <div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>{root ? `Exploring ${root.name}` : 'Select a resource to explore'}</small></div></div>
-            <div className="branch-hint">Use + / − on nodes to expand or fold lineage</div>
-          </div>
-          {graph ? <ReactFlowProvider key={graphVersion}><Canvas graph={graph} rootId={rootId} selectedId={selectedId} setSelectedId={setSelectedId} theme={theme} /></ReactFlowProvider> : <div className="loading-state"><Network size={32} /><strong>{status || 'No artifacts loaded'}</strong><span>{error || 'Preparing your lineage graph'}</span><button onClick={() => setShowImport(true)}>Import artifacts</button></div>}
+          {graph ? <ReactFlowProvider key={graphVersion}><Canvas graph={graph} rootId={rootId} selectedId={selectedId} setSelectedId={setSelectedId} theme={theme} /></ReactFlowProvider> : <><div className="graph-toolbar"><div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>Select a resource to explore</small></div></div></div><div className="loading-state"><Network size={32} /><strong>{status || 'No artifacts loaded'}</strong><span>{error || 'Preparing your lineage graph'}</span><button onClick={() => setShowImport(true)}>Import artifacts</button></div></>}
           <div className="graph-legend"><span>LEGEND</span><span><i className="legend-icon source"><Database size={12} /></i> Source</span><span><i className="legend-icon model"><Layers2 size={12} /></i> Model</span><span><i className="legend-icon seed"><Table2 size={12} /></i> Seed</span><span><i className="legend-icon exposure"><ArrowUpRight size={12} /></i> Exposure</span><div className="legend-spacer" /><span>Model-level lineage</span></div>
         </div>
         <div className="page-foot"><span>Built for a clearer view of your data.</span><span>Data stays in your local workspace <span className="heart">✦</span></span></div>

@@ -575,6 +575,33 @@ select:focus-visible {
     white-space: nowrap;
     max-width: 250px;
 }
+.export-controls {
+    display: flex;
+    flex: none;
+    gap: 6px;
+}
+.export-controls select,
+.export-controls button {
+    border: 1px solid #e0e5ed;
+    border-radius: 7px;
+    background: #fff;
+    color: #465268;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px;
+}
+.export-controls button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.export-controls button:hover:not(:disabled) {
+    background: #f7f8fb;
+}
+.export-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 .toolbar-controls {
     display: flex;
     align-items: center;
@@ -1403,6 +1430,8 @@ select:focus-visible {
 .app[data-theme="dark"] .import-button,
 .app[data-theme="dark"] .theme-button,
 .app[data-theme="dark"] .minimap-toggle,
+.app[data-theme="dark"] .export-controls select,
+.app[data-theme="dark"] .export-controls button,
 .app[data-theme="dark"] .fit-button,
 .app[data-theme="dark"] .branch-control {
     background: #233147;
@@ -1412,6 +1441,7 @@ select:focus-visible {
 .app[data-theme="dark"] .import-button:hover,
 .app[data-theme="dark"] .theme-button:hover,
 .app[data-theme="dark"] .minimap-toggle:hover,
+.app[data-theme="dark"] .export-controls button:hover:not(:disabled),
 .app[data-theme="dark"] .icon-button:hover,
 .app[data-theme="dark"] .resource-item:hover,
 .app[data-theme="dark"] .branch-control:hover {

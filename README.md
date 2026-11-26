@@ -16,6 +16,8 @@ Nodes show the resource name and its materialization when available. Hover over 
 
 Use the minimap to pan or zoom around the graph; use the map button to show or hide it. The header theme button switches between light and dark mode and saves the choice in browser storage.
 
+Use **Export** to download the current expanded graph as SVG, JSON, or Mermaid (`.mmd`). Exports include all displayed nodes, including those outside the current viewport, but exclude folded branches. JSON includes resource metadata and current positions. If the graph hits its 100-node limit, JSON, Mermaid, and SVG mark it as truncated. SVG uses the current theme and a simplified visual style; the full node name is available in its tooltip.
+
 ELK positions the nodes; React Flow draws Bézier edges from shared incoming and outgoing attachment points. Dragging a node keeps its connections attached; expanding or folding a branch recalculates the layout. Curves may cross nodes or other edges in complex graphs.
 
 Connections are dbt **resource dependencies**, not column-level lineage. The manifest and catalog alone do not provide verified column-to-column transformations. Tests are excluded from the graph.
