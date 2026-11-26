@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLineage, getNeighborhood } from './lineage.js';
+import { buildLineage, getNeighborhood } from './lineage.ts';
 
 const manifest = {
   nodes: {
@@ -41,7 +41,7 @@ test('keeps shared branches reachable and restores folded expansions', () => {
     shared: { name: 'shared', resource_type: 'model', depends_on: { nodes: ['left', 'right'] } },
     end: { name: 'end', resource_type: 'model', depends_on: { nodes: ['shared'] } },
   } }, { nodes: {} });
-  const expanded = { upstream: new Set(), downstream: new Set(['root', 'left', 'right', 'shared']) };
+  const expanded = { upstream: new Set<string>(), downstream: new Set(['root', 'left', 'right', 'shared']) };
   assert.equal(getNeighborhood(diamond, 'root', expanded).ids.length, 5);
   expanded.downstream.delete('left');
   let visible = getNeighborhood(diamond, 'root', expanded);
@@ -70,7 +70,7 @@ test('allows expanding beyond four levels', () => {
     `n${i}`, { name: `n${i}`, resource_type: 'model', depends_on: { nodes: i ? [`n${i - 1}`] : [] } },
   ]));
   const graph = buildLineage({ nodes }, { nodes: {} });
-  const expanded = { upstream: new Set(), downstream: new Set(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']) };
+  const expanded = { upstream: new Set<string>(), downstream: new Set(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']) };
   assert.equal(getNeighborhood(graph, 'n0', expanded).ids.length, 7);
 });
 

@@ -1,14 +1,48 @@
+import type { Column, ExpandedBranches, LineageEdge, LineageGraph, Neighborhood } from './types.ts';
+
+interface DbtResource {
+  resource_type: string;
+  name?: string;
+  schema?: string;
+  database?: string;
+  package_name?: string;
+  source_name?: string;
+  description?: string;
+  original_file_path?: string;
+  config?: { materialized?: string };
+  columns?: Record<string, Column>;
+  depends_on?: { nodes?: string[] };
+}
+
+interface Manifest {
+  nodes: Record<string, DbtResource>;
+  sources?: Record<string, DbtResource>;
+  exposures?: Record<string, DbtResource>;
+  metrics?: Record<string, DbtResource>;
+  semantic_models?: Record<string, DbtResource>;
+  saved_queries?: Record<string, DbtResource>;
+  parent_map?: Record<string, string[]>;
+  metadata?: LineageGraph['metadata'];
+}
+
+interface Catalog {
+  nodes: Record<string, { columns?: Record<string, Column> }>;
+  sources?: Record<string, { columns?: Record<string, Column> }>;
+}
+
 const SUPPORTED = new Set(['model', 'source', 'seed', 'snapshot', 'exposure', 'analysis', 'metric', 'semantic_model', 'saved_query']);
 
-export function buildLineage(manifest, catalog) {
-  if (!manifest || typeof manifest !== 'object' || !manifest.nodes || typeof manifest.nodes !== 'object' || Array.isArray(manifest.nodes)) {
+export function buildLineage(manifestInput: unknown, catalogInput: unknown): LineageGraph {
+  if (!manifestInput || typeof manifestInput !== 'object' || !('nodes' in manifestInput) || !manifestInput.nodes || typeof manifestInput.nodes !== 'object' || Array.isArray(manifestInput.nodes)) {
     throw new Error('Invalid manifest.json: expected a nodes object.');
   }
-  if (!catalog || typeof catalog !== 'object' || !catalog.nodes || typeof catalog.nodes !== 'object' || Array.isArray(catalog.nodes)) {
+  if (!catalogInput || typeof catalogInput !== 'object' || !('nodes' in catalogInput) || !catalogInput.nodes || typeof catalogInput.nodes !== 'object' || Array.isArray(catalogInput.nodes)) {
     throw new Error('Invalid catalog.json: expected a nodes object.');
   }
-  const resources = {};
-  for (const collection of ['nodes', 'sources', 'exposures', 'metrics', 'semantic_models', 'saved_queries']) {
+  const manifest = manifestInput as Manifest;
+  const catalog = catalogInput as Catalog;
+  const resources: LineageGraph['resources'] = {};
+  for (const collection of ['nodes', 'sources', 'exposures', 'metrics', 'semantic_models', 'saved_queries'] as const) {
     for (const [id, resource] of Object.entries(manifest[collection] || {})) {
       if (!resource || !SUPPORTED.has(resource.resource_type)) continue;
       const catalogNode = (resource.resource_type === 'source' ? catalog.sources : catalog.nodes)?.[id];
@@ -34,8 +68,8 @@ export function buildLineage(manifest, catalog) {
       };
     }
   }
-  const parents = {};
-  const children = {};
+  const parents: LineageGraph['parents'] = {};
+  const children: LineageGraph['children'] = {};
   for (const id of Object.keys(resources)) {
     parents[id] = [];
     children[id] = [];
@@ -51,16 +85,16 @@ export function buildLineage(manifest, catalog) {
   return { resources, parents, children, metadata: manifest.metadata || {} };
 }
 
-export function getNeighborhood(graph, root, expanded, limit = 100) {
+export function getNeighborhood(graph: LineageGraph, root: string, expanded: ExpandedBranches, limit = 100): Neighborhood {
   if (!graph.resources[root]) return { ids: [], edges: [], truncated: false };
   const seen = new Set([root]);
   const queue = [root];
-  const edges = [];
-  const edgeIds = new Set();
+  const edges: LineageEdge[] = [];
+  const edgeIds = new Set<string>();
   let truncated = false;
   for (let i = 0; i < queue.length; i++) {
     const id = queue[i];
-    for (const direction of ['upstream', 'downstream']) {
+    for (const direction of ['upstream', 'downstream'] as const) {
       if (!expanded[direction].has(id)) continue;
       const neighbors = direction === 'upstream' ? graph.parents[id] : graph.children[id];
       for (const neighbor of neighbors) {
@@ -82,7 +116,7 @@ export function getNeighborhood(graph, root, expanded, limit = 100) {
   return { ids: [...seen], edges, truncated };
 }
 
-export function defaultResource(graph) {
+export function defaultResource(graph: LineageGraph): string {
   const models = Object.values(graph.resources).filter((resource) => resource.type === 'model');
   return models.find((resource) => {
     const count = graph.parents[resource.id].length + graph.children[resource.id].length;

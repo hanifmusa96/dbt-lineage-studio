@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createExportGraph, exportMermaid, exportSvg } from './export.js';
+import { createExportGraph, exportMermaid, exportSvg } from './export.ts';
 
+const defaults = { schema: '', database: '', packageName: '', sourceName: '', description: '', path: '' };
 const graph = { resources: {
-  a: { id: 'a', name: 'model "quoted" #1', type: 'model', materialization: 'view', columns: [{ name: 'id' }], dependencies: ['hidden'] },
-  b: { id: 'b', name: '<source & name>', type: 'source', materialization: '', columns: [], dependencies: [] },
+  a: { ...defaults, id: 'a', name: 'model "quoted" #1', type: 'model', materialization: 'view', columns: [{ name: 'id' }], dependencies: ['hidden'] },
+  b: { ...defaults, id: 'b', name: '<source & name>', type: 'source', materialization: '', columns: [], dependencies: [] },
 } };
 const neighborhood = { ids: ['a', 'b'], edges: [{ source: 'b', target: 'a' }], truncated: true };
 const nodes = [

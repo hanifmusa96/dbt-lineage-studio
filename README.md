@@ -4,7 +4,7 @@ A local dbt lineage explorer inspired by dbt-colibri. It uses React Flow and ELK
 
 ## Desktop app
 
-Install [Tauri's desktop prerequisites](https://v2.tauri.app/start/prerequisites/), including Rust, and Node.js. Then:
+Install [Tauri's desktop prerequisites](https://v2.tauri.app/start/prerequisites/), including Rust, and Node.js 22.18 or newer. Then:
 
 1. Generate dbt artifacts with `dbt compile` and `dbt docs generate`, or use existing artifacts.
 2. Run `npm install` and `npm run tauri dev`.
@@ -14,7 +14,7 @@ Run `npm run tauri build` to build a desktop bundle for the current platform. Pl
 
 ## Browser development
 
-Run `npm install` and `npm run dev`, then open the local URL printed by Vite. The development and preview servers automatically load `target/manifest.json` and `target/catalog.json`; you can also select files using **Import artifacts**. They bind to localhost. `npm run build` builds the frontend; `npm run preview` serves it with the same local-artifact endpoints. A separately hosted static build can use the import dialog instead.
+With Node.js 22.18 or newer, run `npm install` and `npm run dev`, then open the local URL printed by Vite. The development and preview servers automatically load `target/manifest.json` and `target/catalog.json`; you can also select files using **Import artifacts**. They bind to localhost. `npm run build` builds the frontend; `npm run preview` serves it with the same local-artifact endpoints. A separately hosted static build can use the import dialog instead.
 
 Search for a resource, select it to focus its graph, and click a graph node for metadata. Use the **+ / −** buttons on the left and right of a node to expand or fold its upstream and downstream connections. Shared resources remain visible while connected through another expanded branch; reopening a branch restores its previous expansions. Graphs are limited to 100 nodes to keep large projects responsive; focus another resource to continue exploring.
 
@@ -28,4 +28,8 @@ ELK positions the nodes; React Flow draws Bézier edges from shared incoming and
 
 Connections are dbt **resource dependencies**, not column-level lineage. The manifest and catalog alone do not provide verified column-to-column transformations. Tests are excluded from the graph.
 
-Run focused tests with `npm test`.
+## Development
+
+The TypeScript code is organized under `src/features/` by artifact import, lineage, and export. `src/app/` contains the application shell and shared styles. Tests live alongside their features.
+
+Run `npm test` for the test suite or `npm run typecheck` to check types. `npm run build` also type-checks before building.

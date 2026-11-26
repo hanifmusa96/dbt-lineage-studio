@@ -2,15 +2,16 @@ import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
+import type { Connect, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
-function localArtifacts() {
-  const middleware = async (req, res, next) => {
-    const files = {
+function localArtifacts(): Plugin {
+  const middleware: Connect.NextHandleFunction = async (req, res, next) => {
+    const files: Record<string, string> = {
       '/api/artifacts/manifest': 'manifest.json',
       '/api/artifacts/catalog': 'catalog.json',
     };
-    const filename = files[req.url?.split('?')[0]];
+    const filename = files[req.url?.split('?')[0] ?? ''];
     if (!filename) return next();
     const path = resolve(process.cwd(), 'target', filename);
     try {
@@ -20,8 +21,8 @@ function localArtifacts() {
       stream.on('error', () => res.destroy());
       stream.pipe(res);
     } catch (error) {
-      res.statusCode = error.code === 'ENOENT' ? 404 : 500;
-      res.end(`Could not read ${filename}: ${error.message}`);
+      res.statusCode = error instanceof Error && 'code' in error && error.code === 'ENOENT' ? 404 : 500;
+      res.end(`Could not read ${filename}: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
   return {

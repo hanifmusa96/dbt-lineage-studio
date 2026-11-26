@@ -1,14 +1,34 @@
-function escapeXml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;',
-  })[char]);
+import type { Node } from '@xyflow/react';
+import type { LineageGraph, Neighborhood, Resource, Theme } from '../lineage/types.ts';
+
+type ExportNode = Omit<Resource, 'dependencies'> & {
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+};
+export interface ExportGraph {
+  version: number;
+  rootId: string;
+  truncated: boolean;
+  nodes: ExportNode[];
+  edges: Neighborhood['edges'];
+}
+export interface ExportPath {
+  d: string;
+  bounds: { x: number; y: number; width: number; height: number };
 }
 
-function escapeMermaid(value) {
+function escapeXml(value: string) {
+  const entities: Record<string, string> = {
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;',
+  };
+  return String(value).replace(/[&<>"']/g, (char) => entities[char]);
+}
+
+function escapeMermaid(value: string) {
   return String(value).replace(/[&#"<>\\\r\n]/g, (char) => `#${char.codePointAt(0)};`);
 }
 
-export function createExportGraph(graph, rootId, neighborhood, nodes) {
+export function createExportGraph(graph: Pick<LineageGraph, 'resources'>, rootId: string, neighborhood: Neighborhood, nodes: Pick<Node, 'id' | 'position' | 'measured'>[]): ExportGraph {
   const positions = new Map(nodes.map((node) => [node.id, node]));
   const resources = neighborhood.ids.map((id) => {
     const node = positions.get(id);
@@ -31,7 +51,7 @@ export function createExportGraph(graph, rootId, neighborhood, nodes) {
   };
 }
 
-export function exportMermaid(snapshot) {
+export function exportMermaid(snapshot: ExportGraph) {
   const ids = new Map(snapshot.nodes.map((node, i) => [node.id, `n${i}`]));
   const lines = ['flowchart LR'];
   if (snapshot.truncated) lines.push('    %% This graph is truncated at 100 nodes.');
@@ -44,7 +64,7 @@ export function exportMermaid(snapshot) {
   return `${lines.join('\n')}\n`;
 }
 
-export function exportSvg(snapshot, paths, theme) {
+export function exportSvg(snapshot: ExportGraph, paths: ExportPath[], theme: Theme) {
   if (paths.length !== snapshot.edges.length) {
     throw new Error('Some edges are not ready to export. Please try again.');
   }
@@ -65,7 +85,7 @@ export function exportSvg(snapshot, paths, theme) {
     const { x, y } = node.position;
     const { width, height } = node.size;
     const centerY = y + height / 2;
-    const typeColors = {
+    const typeColors: Record<string, string[]> = {
       source: dark ? ['#173c36', '#75ddbd'] : ['#e7f8f2', '#26a98a'],
       seed: dark ? ['#493922', '#f1c379'] : ['#fff5e7', '#d79542'],
       exposure: dark ? ['#482c3d', '#f0a2be'] : ['#fff0f4', '#d97799'],
