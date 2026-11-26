@@ -4,6 +4,33 @@ const elk = new ELK();
 const NODE_WIDTH = 200;
 const MIN_NODE_HEIGHT = 52;
 
+export function bezierRoute({ startPoint, endPoint, bendPoints = [] }) {
+  const points = [startPoint, ...bendPoints, endPoint]
+    .filter((point, i, all) => i === 0 || point.x !== all[i - 1].x || point.y !== all[i - 1].y);
+  const path = [`M ${startPoint.x} ${startPoint.y}`];
+  for (let i = 1; i < points.length - 1; i++) {
+    const previous = points[i - 1];
+    const corner = points[i];
+    const next = points[i + 1];
+    const incoming = Math.hypot(corner.x - previous.x, corner.y - previous.y);
+    const outgoing = Math.hypot(next.x - corner.x, next.y - corner.y);
+    const radius = Math.min(20, incoming / 2, outgoing / 2);
+    const before = {
+      x: corner.x + (previous.x - corner.x) * radius / incoming,
+      y: corner.y + (previous.y - corner.y) * radius / incoming,
+    };
+    const after = {
+      x: corner.x + (next.x - corner.x) * radius / outgoing,
+      y: corner.y + (next.y - corner.y) * radius / outgoing,
+    };
+    const control1 = { x: before.x + (corner.x - before.x) * 2 / 3, y: before.y + (corner.y - before.y) * 2 / 3 };
+    const control2 = { x: after.x + (corner.x - after.x) * 2 / 3, y: after.y + (corner.y - after.y) * 2 / 3 };
+    path.push(`L ${before.x} ${before.y} C ${control1.x} ${control1.y} ${control2.x} ${control2.y} ${after.x} ${after.y}`);
+  }
+  path.push(`L ${endPoint.x} ${endPoint.y}`);
+  return path.join(' ');
+}
+
 export async function layoutLineage(neighborhood) {
   const ports = new Map(neighborhood.ids.map((id) => [id, []]));
   const edges = neighborhood.edges.map(({ source, target }, i) => {

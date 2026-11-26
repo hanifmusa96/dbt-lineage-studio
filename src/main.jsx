@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  Background, BackgroundVariant, BaseEdge, Controls, getSmoothStepPath, Handle, MarkerType, Position,
+  Background, BackgroundVariant, BaseEdge, Controls, getBezierPath, Handle, MarkerType, Position,
   ReactFlow, ReactFlowProvider, useNodesState, useReactFlow, useUpdateNodeInternals,
 } from '@xyflow/react';
 import {
@@ -10,7 +10,7 @@ import {
   Search, Table2, Upload, X,
 } from 'lucide-react';
 import { buildLineage, defaultResource, getNeighborhood } from './lineage.js';
-import { layoutLineage } from './layout.js';
+import { bezierRoute, layoutLineage } from './layout.js';
 import '@xyflow/react/dist/style.css';
 import './styles.css';
 
@@ -53,12 +53,12 @@ function ResourceNode({ id, data, selected }) {
 const nodeTypes = { resource: ResourceNode };
 
 function RoutedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd, style }) {
-  const { startPoint, endPoint, bendPoints = [] } = data.route;
+  const { startPoint, endPoint } = data.route;
   const moved = Math.abs(sourceX - startPoint.x) > 1 || Math.abs(sourceY - startPoint.y) > 1 ||
     Math.abs(targetX - endPoint.x) > 1 || Math.abs(targetY - endPoint.y) > 1;
   const path = moved
-    ? getSmoothStepPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition })[0]
-    : [startPoint, ...bendPoints, endPoint].map((point, i) => `${i ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ');
+    ? getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition })[0]
+    : bezierRoute(data.route);
   return <BaseEdge id={id} path={path} markerEnd={markerEnd} style={style} />;
 }
 const edgeTypes = { routed: RoutedEdge };
