@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
+import { isTauri } from '@tauri-apps/api/core';
 import {
   Background, BackgroundVariant, Controls, Handle, MarkerType, MiniMap, Position,
   ReactFlow, ReactFlowProvider, useNodesState, useReactFlow, useUpdateNodeInternals,
@@ -11,6 +12,7 @@ import {
   Search, Sun, Table2, Upload, X,
 } from 'lucide-react';
 import { buildLineage, defaultResource, getNeighborhood } from './lineage.js';
+import { saveLineage } from './desktop.js';
 import { createExportGraph, exportMermaid, exportSvg } from './export.js';
 import { layoutLineage } from './layout.js';
 import '@xyflow/react/dist/style.css';
@@ -88,6 +90,7 @@ function ResourceNode({ id, data, selected }) {
   );
 }
 const nodeTypes = { resource: ResourceNode };
+const desktop = isTauri();
 const minimapNodeColor = (node) => {
   if (node.data.isRoot) return '#8183ef';
   return { source: '#43b696', seed: '#d99b4c', exposure: '#d77f9d' }[node.data.resource.type] || '#a3a8c1';
@@ -99,6 +102,7 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
   const [layoutError, setLayoutError] = useState('');
   const [exportError, setExportError] = useState('');
   const [exportFormat, setExportFormat] = useState('svg');
+  const [exporting, setExporting] = useState(false);
   const [layingOut, setLayingOut] = useState(false);
   const [showMinimap, setShowMinimap] = useState(true);
   const [expanded, setExpanded] = useState(() => ({
@@ -123,8 +127,9 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
     neighborhood.ids.every((id) => nodes.some((node) => node.id === id)) &&
     neighborhood.edges.every(({ source, target }) => edges.some((edge) => edge.source === source && edge.target === target));
 
-  const exportLineage = () => {
+  const exportLineage = async () => {
     setExportError('');
+    setExporting(true);
     try {
       const snapshot = createExportGraph(graph, rootId, neighborhood, getNodes());
       let content;
@@ -154,17 +159,23 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
         type = 'image/svg+xml';
         extension = 'svg';
       }
-      const url = URL.createObjectURL(new Blob([content], { type }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `lineage.${extension}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (desktop) {
+        await saveLineage(content, extension, exportFormat);
+      } else {
+        const url = URL.createObjectURL(new Blob([content], { type }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `lineage.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
     } catch (error) {
       console.error('Lineage export failed:', error);
-      setExportError(`Could not export lineage: ${error.message}`);
+      setExportError(`Could not export lineage: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -211,7 +222,7 @@ function Canvas({ graph, rootId, selectedId, setSelectedId, theme }) {
         <select aria-label="Export format" value={exportFormat} onChange={(event) => setExportFormat(event.target.value)}>
           <option value="svg">SVG</option><option value="json">JSON</option><option value="mermaid">Mermaid</option>
         </select>
-        <button onClick={exportLineage} disabled={!readyToExport}><Download size={15} /> Export</button>
+        <button onClick={exportLineage} disabled={!readyToExport || exporting}><Download size={15} /> Export</button>
       </div>
     </div>
     <div className="canvas" ref={canvasRef}>
@@ -255,9 +266,9 @@ function App() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [graphVersion, setGraphVersion] = useState(0);
-  const [status, setStatus] = useState('Loading local dbt artifacts…');
+  const [status, setStatus] = useState(desktop ? '' : 'Loading local dbt artifacts…');
   const [error, setError] = useState('');
-  const [showImport, setShowImport] = useState(false);
+  const [showImport, setShowImport] = useState(desktop);
   const [manifestFile, setManifestFile] = useState(null);
   const [catalogFile, setCatalogFile] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 600);
@@ -272,6 +283,7 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (desktop) return undefined;
     const request = ++requestId.current;
     async function loadLocal() {
       try {
@@ -376,7 +388,7 @@ function App() {
     </div>
     {showImport && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && graph) setShowImport(false); }}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
       <div className="modal-head"><span className="title-icon"><FileJson size={19} /></span>{graph && <button className="icon-button" onClick={() => setShowImport(false)} aria-label="Close import dialog"><X size={18} /></button>}</div>
-      <h2 id="import-title">Bring your lineage to life</h2><p>Choose your dbt artifacts to explore your project's dependencies. Files are read locally in your browser.</p>
+      <h2 id="import-title">Bring your lineage to life</h2><p>Choose your dbt artifacts to explore your project's dependencies. Files are read locally on your device.</p>
       {error && <div className="form-error" role="alert">{error}</div>}
       <form onSubmit={importFiles}><label className="file-label">Manifest <span>Required</span><input type="file" accept=".json,application/json" onChange={(event) => setManifestFile(event.target.files[0] || null)} /></label><label className="file-label">Catalog <span>Required</span><input type="file" accept=".json,application/json" onChange={(event) => setCatalogFile(event.target.files[0] || null)} /></label><button className="submit-button" type="submit" disabled={Boolean(status)}>{status || 'Explore lineage'} <ArrowUpRight size={16} /></button></form>
       <small>Generate artifacts with <code>dbt compile</code> and <code>dbt docs generate</code>.</small>

@@ -31,4 +31,7 @@ function localArtifacts() {
   };
 }
 
-export default defineConfig({ plugins: [react(), localArtifacts()] });
+export default defineConfig({
+  plugins: [react(), localArtifacts()],
+  server: { port: 5173, strictPort: true, watch: { ignored: ['**/src-tauri/**'] } },
+});

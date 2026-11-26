@@ -2,13 +2,19 @@
 
 A local dbt lineage explorer inspired by dbt-colibri. It uses React Flow and ELK to display resource-level dependencies from `manifest.json`, enriched with column metadata from `catalog.json`.
 
-## Run
+## Desktop app
+
+Install [Tauri's desktop prerequisites](https://v2.tauri.app/start/prerequisites/), including Rust, and Node.js. Then:
 
 1. Generate dbt artifacts with `dbt compile` and `dbt docs generate`, or use existing artifacts.
-2. Place `manifest.json` and `catalog.json` in `target/`.
-3. Run `npm install` and `npm run dev`. Open the local URL printed by Vite.
+2. Run `npm install` and `npm run tauri dev`.
+3. Select `manifest.json` and `catalog.json` in the import dialog.
 
-The app loads the two local files automatically. You can also import another pair using **Import artifacts**; those files are read in your browser and are not persisted. The development and preview servers bind to localhost. `npm run build` builds the frontend; `npm run preview` serves it with the same local-artifact endpoints. A separately hosted static build can use the import dialog instead.
+Run `npm run tauri build` to build a desktop bundle for the current platform. Platform-specific signing and distribution may require additional setup. The desktop app does not automatically load a project directory: select both files each time you launch it. Artifacts are read locally and are not persisted by the app. Export opens a native save dialog.
+
+## Browser development
+
+Run `npm install` and `npm run dev`, then open the local URL printed by Vite. The development and preview servers automatically load `target/manifest.json` and `target/catalog.json`; you can also select files using **Import artifacts**. They bind to localhost. `npm run build` builds the frontend; `npm run preview` serves it with the same local-artifact endpoints. A separately hosted static build can use the import dialog instead.
 
 Search for a resource, select it to focus its graph, and click a graph node for metadata. Use the **+ / −** buttons on the left and right of a node to expand or fold its upstream and downstream connections. Shared resources remain visible while connected through another expanded branch; reopening a branch restores its previous expansions. Graphs are limited to 100 nodes to keep large projects responsive; focus another resource to continue exploring.
 
