@@ -1,37 +1,84 @@
 # Lineage Studio
 
-A local dbt lineage explorer inspired by dbt-colibri. It uses React Flow and ELK to display resource-level dependencies from `manifest.json`, optionally enriched with column metadata from `catalog.json`.
+Explore your dbt project's data lineage locally, in a desktop app or a browser. Lineage Studio turns a dbt manifest into an interactive graph using [React Flow](https://reactflow.dev/) and [ELK](https://eclipse.dev/elk/), with a UI inspired by dbt-colibri.
 
-## Desktop app
+## Features
 
-Install [Tauri's desktop prerequisites](https://v2.tauri.app/start/prerequisites/), including Rust, and Node.js 22.18 or newer. Then:
+- **Explore lineage:** Search and filter resources, focus a model, and expand or collapse its upstream and downstream dependencies.
+- **Inspect resources:** View metadata and columns, or read a model's source code when you select a dbt project folder.
+- **Navigate the graph:** Drag nodes, use the minimap, resize the details panel, and switch between light and dark themes.
+- **Export:** Save the visible graph as SVG, JSON, or Mermaid.
+- **Work locally:** Artifacts and source files are read on your device. The app does not persist them.
 
-1. Generate a manifest with `dbt compile`, or use an existing one. Optionally, run `dbt docs generate` to include a catalog.
-2. Run `npm install` and `npm run tauri dev`.
-3. Choose your dbt project folder in the import dialog, or select `manifest.json` and optionally `catalog.json` separately.
+## Prerequisites
 
-Run `npm run tauri build` to build a desktop bundle for the current platform. Platform-specific signing and distribution may require additional setup. Select a project or artifacts each time you launch the desktop app. Files are read locally and are not persisted by the app. Export opens a native save dialog.
+- Node.js **22.18 or newer** and npm.
+- A dbt `manifest.json`. A `catalog.json` is optional and adds warehouse column metadata.
+- For the desktop app, Rust and the [Tauri platform prerequisites](https://v2.tauri.app/start/prerequisites/).
 
-## Browser development
+Generate a manifest from your dbt project with `dbt compile`. To include a catalog, run `dbt docs generate` where supported by your dbt version. You can also use existing artifacts.
 
-With Node.js 22.18 or newer, run `npm install` and `npm run dev`, then open the local URL printed by Vite. The development and preview servers automatically load `target/manifest.json` and, if present, `target/catalog.json`; you can also select a project folder or separate files using **Import artifacts**. Folder selection requires a browser with directory upload support. The servers bind to localhost. `npm run build` builds the frontend; `npm run preview` serves it with the same local-artifact endpoints. A separately hosted static build can use the import dialog instead.
+## Getting started
 
-Choosing a project loads `target/manifest.json` and, if present, `target/catalog.json` from that folder. Without a catalog, lineage and manifest-defined column metadata remain available, but warehouse-derived column details are unavailable. Select a model in the graph and switch between **Details** and **Raw code** to read its source file. Source code is available only when a project folder has been selected; separately imported or automatically loaded artifacts do not grant access to project files. Dependency models are looked up under the default `dbt_packages/<package>/` directory; custom package installation paths are not supported. The desktop app restricts project reads to the selected folder, including resolved symlinks. In the browser, files are available from the selected folder upload and may need to be reselected after changes. Drag the left edge of the details panel to resize it, or focus the edge and use the left and right arrow keys.
+Clone this repository, open a terminal in its root directory, and install dependencies:
 
-Search for a resource, select it to focus its graph, and click a graph node for metadata. Use the **+ / −** buttons on the left and right of a node to expand or fold its upstream and downstream connections. Shared resources remain visible while connected through another expanded branch; reopening a branch restores its previous expansions. Graphs are limited to 100 nodes to keep large projects responsive; focus another resource to continue exploring.
+```sh
+npm install
+```
 
-Nodes show the resource name and its materialization when available. Hover over or focus a name to see it in full.
+### Desktop
 
-Use the minimap to pan or zoom around the graph; use the map button to show or hide it. The header theme button switches between light and dark mode and saves the choice in browser storage.
+```sh
+npm run tauri dev
+```
 
-Use **Export** to download the current expanded graph as SVG, JSON, or Mermaid (`.mmd`). Exports include all displayed nodes, including those outside the current viewport, but exclude folded branches. JSON includes resource metadata and current positions. If the graph hits its 100-node limit, JSON, Mermaid, and SVG mark it as truncated. SVG uses the current theme and a simplified visual style; the full node name is available in its tooltip.
+In the import dialog, choose a dbt project folder or select `manifest.json` and optionally `catalog.json` separately. Project folders must contain `target/manifest.json`; `target/catalog.json` is loaded when present.
 
-ELK positions the nodes; React Flow draws Bézier edges from shared incoming and outgoing attachment points. Dragging a node keeps its connections attached; expanding or folding a branch recalculates the layout. Curves may cross nodes or other edges in complex graphs.
+To build a desktop bundle for your current platform:
 
-Connections are dbt **resource dependencies**, not column-level lineage. The manifest and catalog alone do not provide verified column-to-column transformations. Tests are excluded from the graph.
+```sh
+npm run tauri build
+```
+
+The command prints the bundle location. Signing and distribution may require additional platform-specific setup.
+
+### Browser
+
+```sh
+npm run dev
+```
+
+Open the local URL printed by Vite. The development server attempts to load `target/manifest.json` and an optional `target/catalog.json` from this repository's working directory. You can also use **Import artifacts** to select a dbt project folder or individual files. Folder selection requires a browser that supports directory uploads.
+
+```sh
+npm run build
+npm run preview
+```
+
+The preview server also supports local artifact auto-loading. Development and preview servers bind to localhost. A separately hosted static build can use the import dialog.
+
+## Using the graph
+
+1. Select a resource in the explorer to focus its lineage.
+2. Use the **+ / −** controls on each node to expand or fold dependencies.
+3. Click a node to open its details. Switch to **Raw code** for model source when a project folder is selected.
+4. Choose an export format and select **Export** to save the currently expanded graph.
+
+Drag the left edge of the details panel to resize it, or focus the edge and use the arrow keys. Exports include visible nodes outside the viewport but exclude folded branches. Graphs are limited to 100 nodes; focus another resource to explore further. Exports indicate when the graph is truncated.
+
+## Notes and limitations
+
+- Connections represent dbt **resource dependencies**, not verified column-level lineage. Tests are excluded from the graph.
+- Source code requires selecting a project folder; importing artifacts individually or auto-loading them does not grant access to project files. Dependency models use the default `dbt_packages/<package>/` location; custom package installation paths are not supported.
+- The desktop app restricts project reads to the selected folder, including resolved symlinks. In the browser, you may need to reselect a folder after files change.
+- Project files and artifacts are not persisted by the app. The theme preference is saved in browser storage.
 
 ## Development
 
-The TypeScript code follows a feature-based structure: `src/features/` contains artifact import, lineage, and export, with feature-specific components, APIs, and utilities. `src/app/` composes the features; `src/components/`, `src/styles/`, and `src/types/` contain shared code. Tests are centralized under `src/testing/`, grouped by feature (unlike the Bulletproof React example, which uses that directory for shared test utilities and keeps feature tests near their code). Features depend on shared code rather than importing one another. Add shared folders only when they are needed.
+```sh
+npm test             # Run tests
+npm run typecheck    # Check TypeScript
+npm run build        # Type-check and build the frontend
+```
 
-Run `npm test` for the test suite or `npm run typecheck` to check types. `npm run build` also type-checks before building.
+The app is organized by feature under [`src/features`](src/features), with shared components, styles, and types under `src/`. Tests are grouped by feature in [`src/testing`](src/testing). The Tauri desktop backend is in [`src-tauri`](src-tauri).
