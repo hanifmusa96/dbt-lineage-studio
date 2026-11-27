@@ -11,7 +11,9 @@ import { layoutLineage } from '../utils/layout.ts';
 import { getNeighborhood } from '../utils/lineage.ts';
 import { ResourceIcon } from '../../../components/ResourceIcon.tsx';
 import type { Direction, ResourceFlowNode } from '../types.ts';
-import type { LineageGraph, Neighborhood, Theme } from '../../../types/lineage.ts';
+import type { LineageGraph, Neighborhood } from '../../../types/lineage.ts';
+import type { Theme } from '../../theme/useTheme.ts';
+import './LineageCanvas.css';
 
 function ResourceNode({ id, data, selected }: NodeProps<ResourceFlowNode>) {
   const { resource, isRoot, upstreamCount, downstreamCount, expanded, onToggle, ports } = data;

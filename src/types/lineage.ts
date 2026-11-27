@@ -28,7 +28,5 @@ export interface LineageGraph {
   children: Record<string, string[]>;
   metadata: { project_name?: string; [key: string]: unknown };
 }
-
-export type Theme = 'light' | 'dark';
 export interface LineageEdge { source: string; target: string }
 export interface Neighborhood { ids: string[]; edges: LineageEdge[]; truncated: boolean }

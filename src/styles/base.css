@@ -1,0 +1,175 @@
+:root {
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    color: #273448;
+    background: #f7f9fc;
+    font-synthesis: none;
+    font-size: 13px;
+}
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    min-width: 320px;
+}
+button,
+input,
+select {
+    font: inherit;
+}
+button {
+    cursor: pointer;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid #6b70ef;
+    outline-offset: 2px;
+}
+
+/* Theme tokens: every themed color in the app comes from these variables. */
+.app {
+    --bg: #f7f9fc;
+    --surface: #fff;
+    --canvas-bg: #fcfdff;
+    --text: #273448;
+    --text-strong: #273147;
+    --text-body: #4b5769;
+    --secondary-text: #586679;
+    --border: #e9ecf2;
+    --border-soft: #edf0f5;
+    --control-bg: #fff;
+    --control-border: #e0e5ed;
+    --control-hover: #f7f8fb;
+    --control-text: #465268;
+    --control-icon: #697589;
+    --hover-bg: #f5f6fb;
+    --chip-bg: #f4f5f9;
+    --accent-text: #6264df;
+    --accent-soft: #efefff;
+    --accent-on-soft: #5f61d6;
+    --accent-border: #dcdff0;
+    --accent-border-strong: #999bf1;
+    --accent-root: #7778e9;
+    --source-bg: #e7f8f2;
+    --source-fg: #26a98a;
+    --seed-bg: #fff5e7;
+    --seed-fg: #d79542;
+    --exposure-bg: #fff0f4;
+    --exposure-fg: #d97799;
+    --warn-bg: #fff9e9;
+    --warn-border: #f5e4ad;
+    --warn-text: #8b6a24;
+    --error-bg: #fff1f2;
+    --error-border: #f4cbd0;
+    --error-text: #a33c46;
+    height: 100vh;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+}
+.app[data-theme="dark"] {
+    --bg: #111827;
+    --surface: #192435;
+    --canvas-bg: #111b2b;
+    --text: #dce5f2;
+    --text-strong: #e8eef8;
+    --text-body: #c8d3e2;
+    --secondary-text: #bdc9d9;
+    --border: #344357;
+    --border-soft: #344357;
+    --control-bg: #233147;
+    --control-border: #43536b;
+    --control-hover: #304158;
+    --control-text: #d5deed;
+    --control-icon: #d5deed;
+    --hover-bg: #304158;
+    --chip-bg: #263449;
+    --accent-text: #c0c3ff;
+    --accent-soft: #34365e;
+    --accent-on-soft: #c0c3ff;
+    --accent-border: #43536b;
+    --accent-border-strong: #a8aaff;
+    --accent-root: #9c9eff;
+    --source-bg: #173c36;
+    --source-fg: #75ddbd;
+    --seed-bg: #493922;
+    --seed-fg: #f1c379;
+    --exposure-bg: #482c3d;
+    --exposure-fg: #f0a2be;
+    --warn-bg: #493922;
+    --warn-border: #846c38;
+    --warn-text: #f5d496;
+    --error-bg: #482a33;
+    --error-border: #90505c;
+    --error-text: #ffc0c8;
+    color-scheme: dark;
+}
+
+/* Resource-type colors, shared by icons and labels across features. */
+.app .source {
+    color: var(--source-fg);
+    background: var(--source-bg);
+}
+.app .seed {
+    color: var(--seed-fg);
+    background: var(--seed-bg);
+}
+.app .exposure {
+    color: var(--exposure-fg);
+    background: var(--exposure-bg);
+}
+
+.list-icon,
+.type-icon,
+.detail-icon,
+.legend-icon,
+.title-icon,
+.graph-icon,
+.workspace-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent-on-soft);
+}
+.live-dot {
+    height: 7px;
+    width: 7px;
+    background: #43c49c;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 3px #def6ed;
+}
+.icon-button {
+    border: 0;
+    background: transparent;
+    color: var(--secondary-text);
+    padding: 6px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+}
+.icon-button:hover {
+    background: var(--control-hover);
+}
+.focus-button,
+.loading-state button,
+.project-button {
+    border: 1px solid var(--accent-border);
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    border-radius: 7px;
+    padding: 9px 12px;
+    font-weight: 700;
+    font-size: 11px;
+}

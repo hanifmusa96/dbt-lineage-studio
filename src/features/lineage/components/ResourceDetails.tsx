@@ -3,6 +3,7 @@ import type { KeyboardEvent, PointerEvent } from 'react';
 import { FileJson, Network, Table2, X } from 'lucide-react';
 import { ResourceIcon } from '../../../components/ResourceIcon.tsx';
 import type { LineageGraph, Resource } from '../../../types/lineage.ts';
+import './ResourceDetails.css';
 
 const MIN_WIDTH = 200;
 const maxWidth = () => Math.max(MIN_WIDTH, Math.min(900, window.innerWidth - 48));

@@ -1,0 +1,140 @@
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    background: #20283d80;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+}
+.modal {
+    width: min(440px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 25px;
+    box-shadow: 0 20px 80px #1c254533;
+}
+.modal-head {
+    display: flex;
+    justify-content: space-between;
+}
+.modal h2 {
+    font:
+        700 20px Manrope,
+        sans-serif;
+    color: var(--text-strong);
+    letter-spacing: -0.6px;
+    margin: 19px 0 8px;
+}
+.modal > p {
+    color: var(--secondary-text);
+    line-height: 1.6;
+    font-size: 12px;
+}
+.modal > small {
+    display: block;
+    color: var(--secondary-text);
+    font-size: 10px;
+    line-height: 1.6;
+    margin-top: 17px;
+}
+.modal code {
+    background: var(--chip-bg);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+.modal form {
+    margin-top: 22px;
+}
+.project-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 11px;
+    border-radius: 8px;
+}
+.project-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+.folder-input {
+    display: none;
+}
+.import-divider {
+    margin-top: 20px;
+    color: var(--secondary-text);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+}
+.file-label {
+    display: block;
+    color: var(--text-body);
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+.file-label span {
+    float: right;
+    color: var(--secondary-text);
+    font-weight: 500;
+}
+.file-label input {
+    display: block;
+    margin-top: 8px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--control-border);
+    border-radius: 7px;
+    color: var(--secondary-text);
+    font-size: 11px;
+}
+.file-label input::file-selector-button {
+    border: 0;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent-on-soft);
+    padding: 6px 9px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+.clear-catalog {
+    display: block;
+    margin: -5px 0 15px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent-text);
+    font-size: 11px;
+}
+.submit-button {
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    background: #6264df;
+    color: #fff;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 700;
+}
+.submit-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+.form-error {
+    border: 1px solid var(--error-border);
+    background: var(--error-bg);
+    color: var(--error-text);
+    padding: 10px;
+    border-radius: 7px;
+    font-size: 11px;
+    line-height: 1.5;
+}

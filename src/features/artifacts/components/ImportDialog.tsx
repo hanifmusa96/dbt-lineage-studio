@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { FormEvent } from 'react';
 import { ArrowUpRight, FileJson, FolderOpen, X } from 'lucide-react';
+import './ImportDialog.css';
 
 export function ImportDialog({ hasGraph, hasCatalog, error, status, desktop, onClose, onSubmit, onManifest, onCatalog, onProject, onProjectFiles, onUnsupported }: {
   hasGraph: boolean;

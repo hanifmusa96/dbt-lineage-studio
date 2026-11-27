@@ -33,13 +33,15 @@ interface Catalog {
 
 const SUPPORTED = new Set(['model', 'source', 'seed', 'snapshot', 'exposure', 'analysis', 'metric', 'semantic_model', 'saved_query']);
 
+function hasNodes(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || !('nodes' in value)) return false;
+  const { nodes } = value;
+  return Boolean(nodes) && typeof nodes === 'object' && !Array.isArray(nodes);
+}
+
 export function buildLineage(manifestInput: unknown, catalogInput?: unknown): LineageGraph {
-  if (!manifestInput || typeof manifestInput !== 'object' || !('nodes' in manifestInput) || !manifestInput.nodes || typeof manifestInput.nodes !== 'object' || Array.isArray(manifestInput.nodes)) {
-    throw new Error('Invalid manifest.json: expected a nodes object.');
-  }
-  if (catalogInput !== undefined && (!catalogInput || typeof catalogInput !== 'object' || !('nodes' in catalogInput) || !catalogInput.nodes || typeof catalogInput.nodes !== 'object' || Array.isArray(catalogInput.nodes))) {
-    throw new Error('Invalid catalog.json: expected a nodes object.');
-  }
+  if (!hasNodes(manifestInput)) throw new Error('Invalid manifest.json: expected a nodes object.');
+  if (catalogInput !== undefined && !hasNodes(catalogInput)) throw new Error('Invalid catalog.json: expected a nodes object.');
   const manifest = manifestInput as Manifest;
   const catalog = catalogInput as Catalog | undefined;
   const resources: LineageGraph['resources'] = {};
