@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLineage, getNeighborhood } from './lineage.ts';
+import { buildLineage, getNeighborhood } from '../../features/lineage/utils/lineage.ts';
 
 const manifest = {
   nodes: {

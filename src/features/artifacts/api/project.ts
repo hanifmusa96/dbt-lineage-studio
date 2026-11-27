@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { Resource } from '../lineage/types.ts';
+import type { Resource } from '../../../types/lineage.ts';
 
 export interface Project {
   name: string;

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { layoutLineage } from "./layout.ts";
+import { layoutLineage } from "../../features/lineage/utils/layout.ts";
 
 test("lays out an isolated node", async () => {
     const layout = await layoutLineage({ ids: ["root"], edges: [] });

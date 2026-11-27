@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { browserProject, chooseDesktopProject, loadProjectArtifacts, modelPath, projectPath } from './project.ts';
-import type { Resource } from '../lineage/types.ts';
+import { browserProject, chooseDesktopProject, loadProjectArtifacts, modelPath, projectPath } from '../../features/artifacts/api/project.ts';
+import type { Resource } from '../../types/lineage.ts';
 
 function projectFile(path: string, content: string): File {
   const file = new File([content], path.split('/').at(-1)!);

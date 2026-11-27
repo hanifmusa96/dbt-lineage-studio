@@ -32,6 +32,6 @@ Connections are dbt **resource dependencies**, not column-level lineage. The man
 
 ## Development
 
-The TypeScript code is organized under `src/features/` by artifact import, lineage, and export. `src/app/` contains the application shell and shared styles. Tests live alongside their features.
+The TypeScript code follows a feature-based structure: `src/features/` contains artifact import, lineage, and export, with feature-specific components, APIs, and utilities. `src/app/` composes the features; `src/components/`, `src/styles/`, and `src/types/` contain shared code. Tests are centralized under `src/testing/`, grouped by feature (unlike the Bulletproof React example, which uses that directory for shared test utilities and keeps feature tests near their code). Features depend on shared code rather than importing one another. Add shared folders only when they are needed.
 
 Run `npm test` for the test suite or `npm run typecheck` to check types. `npm run build` also type-checks before building.

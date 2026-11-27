@@ -1,4 +1,5 @@
-import type { Column, ExpandedBranches, LineageEdge, LineageGraph, Neighborhood } from './types.ts';
+import type { Column, LineageEdge, LineageGraph, Neighborhood } from '../../../types/lineage.ts';
+import type { ExpandedBranches } from '../types.ts';
 
 interface DbtResource {
   resource_type: string;

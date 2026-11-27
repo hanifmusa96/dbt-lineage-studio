@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { saveLineage } from './desktop.ts';
+import { saveLineage } from '../../features/export/api/desktop.ts';
 
 test('saves lineage to the selected path and handles cancellation', async () => {
   const calls: string[] = [];

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createExportGraph, exportMermaid, exportSvg } from './export.ts';
+import { createExportGraph, exportMermaid, exportSvg } from '../../features/export/utils/export.ts';
 
 const defaults = { schema: '', database: '', packageName: '', sourceName: '', description: '', path: '' };
 const graph = { resources: {

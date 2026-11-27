@@ -6,14 +6,15 @@ import {
   ArrowUpRight, Boxes, ChevronDown, CircleHelp, Database, Filter, GitBranch, Layers2,
   Moon, Network, PanelLeftClose, Search, Sun, Table2, Upload,
 } from 'lucide-react';
-import { ImportDialog } from '../features/artifacts/ImportDialog.tsx';
-import { browserProject, chooseDesktopProject, loadProjectArtifacts } from '../features/artifacts/project.ts';
-import type { Project } from '../features/artifacts/project.ts';
-import { LineageCanvas } from '../features/lineage/LineageCanvas.tsx';
-import { ResourceDetails } from '../features/lineage/ResourceDetails.tsx';
-import { ResourceIcon } from '../features/lineage/ResourceIcon.tsx';
-import { buildLineage, defaultResource } from '../features/lineage/lineage.ts';
-import type { LineageGraph, Theme } from '../features/lineage/types.ts';
+import { ImportDialog } from '../features/artifacts/components/ImportDialog.tsx';
+import { browserProject, chooseDesktopProject, loadProjectArtifacts, modelPath } from '../features/artifacts/api/project.ts';
+import type { Project } from '../features/artifacts/api/project.ts';
+import { ExportControls } from '../features/export/components/ExportControls.tsx';
+import { LineageCanvas } from '../features/lineage/components/LineageCanvas.tsx';
+import { ResourceDetails } from '../features/lineage/components/ResourceDetails.tsx';
+import { ResourceIcon } from '../components/ResourceIcon.tsx';
+import { buildLineage, defaultResource } from '../features/lineage/utils/lineage.ts';
+import type { LineageGraph, Resource, Theme } from '../types/lineage.ts';
 
 const desktop = isTauri();
 
@@ -107,6 +108,10 @@ export function App() {
       (!query || [item.name, item.schema, item.packageName, item.sourceName, item.id].some((value) => value.toLowerCase().includes(query))));
   }, [resources, search, filter]);
   const selected = graph?.resources[selectedId];
+  const projectName = graph?.metadata.project_name;
+  const readSource = useMemo(() => project
+    ? (resource: Resource) => project.readFile(modelPath(resource, projectName))
+    : null, [project, projectName]);
   const focus = (id: string) => { setRootId(id); setSelectedId(''); setGraphVersion((version) => version + 1); };
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light';
@@ -158,12 +163,13 @@ export function App() {
           <div className="title-row"><div><div className="title-with-icon"><span className="title-icon"><Network size={20} /></span><h1>Lineage explorer</h1><span className="beta">LOCAL</span></div><p>Understand how your data flows, from source to insight.</p></div><div className="heading-summary"><span><i className="summary-dot model-dot" /> {counts.model?.toLocaleString() || 0} models</span><span><i className="summary-dot source-dot" /> {counts.source?.toLocaleString() || 0} sources</span></div></div>
         </div>
         <div className="graph-card">
-          {graph ? <ReactFlowProvider key={graphVersion}><LineageCanvas graph={graph} rootId={rootId} selectedId={selectedId} setSelectedId={setSelectedId} theme={theme} /></ReactFlowProvider> : <><div className="graph-toolbar"><div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>Select a resource to explore</small></div></div></div><div className="loading-state"><Network size={32} /><strong>{status || 'No artifacts loaded'}</strong><span>{error || 'Preparing your lineage graph'}</span><button onClick={() => setShowImport(true)}>Import artifacts</button></div></>}
+          {graph ? <ReactFlowProvider key={graphVersion}><LineageCanvas graph={graph} rootId={rootId} selectedId={selectedId} setSelectedId={setSelectedId} theme={theme}
+            renderExport={(context) => <ExportControls {...context} graph={graph} rootId={rootId} theme={theme} />} /></ReactFlowProvider> : <><div className="graph-toolbar"><div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>Select a resource to explore</small></div></div></div><div className="loading-state"><Network size={32} /><strong>{status || 'No artifacts loaded'}</strong><span>{error || 'Preparing your lineage graph'}</span><button onClick={() => setShowImport(true)}>Import artifacts</button></div></>}
           <div className="graph-legend"><span>LEGEND</span><span><i className="legend-icon source"><Database size={12} /></i> Source</span><span><i className="legend-icon model"><Layers2 size={12} /></i> Model</span><span><i className="legend-icon seed"><Table2 size={12} /></i> Seed</span><span><i className="legend-icon exposure"><ArrowUpRight size={12} /></i> Exposure</span><div className="legend-spacer" /><span>Model-level lineage</span></div>
         </div>
         <div className="page-foot"><span>Built for a clearer view of your data.</span><span>Data stays in your local workspace <span className="heart">✦</span></span></div>
       </main>
-      {selected && graph && <ResourceDetails resource={selected} graph={graph} rootId={rootId} project={project}
+      {selected && graph && <ResourceDetails resource={selected} graph={graph} rootId={rootId} readSource={readSource}
         onClose={() => setSelectedId('')} onFocus={focus} />}
     </div>
     {showImport && <ImportDialog hasGraph={Boolean(graph)} hasCatalog={Boolean(catalogFile)} error={error} status={status} desktop={desktop}

@@ -1,5 +1,6 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
-import type { Neighborhood, Port } from './types.ts';
+import type { Neighborhood } from '../../../types/lineage.ts';
+import type { Port } from '../types.ts';
 
 const elk = new ELK();
 const NODE_WIDTH = 200;

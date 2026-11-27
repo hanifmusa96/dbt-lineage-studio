@@ -1,5 +1,5 @@
 import type { Node } from '@xyflow/react';
-import type { LineageGraph, Neighborhood, Resource, Theme } from '../lineage/types.ts';
+import type { LineageGraph, Neighborhood, Resource, Theme } from '../../../types/lineage.ts';
 
 type ExportNode = Omit<Resource, 'dependencies'> & {
   position: { x: number; y: number };

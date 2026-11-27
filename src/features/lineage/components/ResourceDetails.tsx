@@ -1,27 +1,25 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
 import { FileJson, Network, Table2, X } from 'lucide-react';
-import { modelPath } from '../artifacts/project.ts';
-import type { Project } from '../artifacts/project.ts';
-import { ResourceIcon } from './ResourceIcon.tsx';
-import type { LineageGraph, Resource } from './types.ts';
+import { ResourceIcon } from '../../../components/ResourceIcon.tsx';
+import type { LineageGraph, Resource } from '../../../types/lineage.ts';
 
 const MIN_WIDTH = 200;
 const maxWidth = () => Math.max(MIN_WIDTH, Math.min(900, window.innerWidth - 48));
 const clampWidth = (width: number) => Math.max(MIN_WIDTH, Math.min(maxWidth(), width));
 
-export function ResourceDetails({ resource, graph, rootId, project, onClose, onFocus }: {
+export function ResourceDetails({ resource, graph, rootId, readSource, onClose, onFocus }: {
   resource: Resource;
   graph: LineageGraph;
   rootId: string;
-  project: Project | null;
+  readSource: ((resource: Resource) => Promise<string>) | null;
   onClose: () => void;
   onFocus: (id: string) => void;
 }) {
   const [tab, setTab] = useState<'details' | 'code'>('details');
   const tabsId = useId();
   const [width, setWidth] = useState(() => clampWidth(window.innerWidth > 900 && window.innerWidth <= 1250 ? 240 : 285));
-  const [source, setSource] = useState<{ project: Project; resource: Resource; code?: string; error?: string } | null>(null);
+  const [source, setSource] = useState<{ reader: NonNullable<typeof readSource>; resource: Resource; code?: string; error?: string } | null>(null);
   const drag = useRef<{ x: number; width: number } | null>(null);
 
   useEffect(() => {
@@ -31,22 +29,21 @@ export function ResourceDetails({ resource, graph, rootId, project, onClose, onF
   }, []);
 
   useEffect(() => {
-    if (tab !== 'code' || !project || resource.type !== 'model') return;
+    if (tab !== 'code' || !readSource || resource.type !== 'model') return;
     let active = true;
     setSource(null);
-    const selectedProject = project;
-    async function readSource() {
+    const reader = readSource;
+    async function loadSource() {
       try {
-        const path = modelPath(resource, graph.metadata.project_name);
-        const code = await selectedProject.readFile(path);
-        if (active) setSource({ project: selectedProject, resource, code });
+        const code = await reader(resource);
+        if (active) setSource({ reader, resource, code });
       } catch (error) {
-        if (active) setSource({ project: selectedProject, resource, error: error instanceof Error ? error.message : String(error) });
+        if (active) setSource({ reader, resource, error: error instanceof Error ? error.message : String(error) });
       }
     }
-    readSource();
+    loadSource();
     return () => { active = false; };
-  }, [tab, project, resource, graph.metadata.project_name]);
+  }, [tab, readSource, resource]);
 
   function startResize(event: PointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return;
@@ -64,7 +61,7 @@ export function ResourceDetails({ resource, graph, rootId, project, onClose, onF
     }
   }
 
-  const currentSource = source?.project === project && source.resource === resource ? source : null;
+  const currentSource = source?.reader === readSource && source.resource === resource ? source : null;
   return <div className="details-panel" style={{ width }}>
     <div className="details-resize" role="separator" aria-label="Resize resource details" aria-orientation="vertical"
       aria-controls="resource-details" aria-valuemin={MIN_WIDTH} aria-valuemax={maxWidth()} aria-valuenow={width}
@@ -93,7 +90,7 @@ export function ResourceDetails({ resource, graph, rootId, project, onClose, onF
         <div className="details-note"><FileJson size={15} /><span>Column metadata comes from your dbt artifacts. Connections represent resource dependencies.</span></div>
       </div> : <div className="source-view" id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-code`}>
         {resource.type !== 'model' ? <p>Raw code is available for models only.</p>
-          : !project ? <p>Select a dbt project folder in Import artifacts to view model source code.</p>
+          : !readSource ? <p>Select a dbt project folder in Import artifacts to view model source code.</p>
             : currentSource?.error ? <p role="alert">{currentSource.error}</p>
               : currentSource?.code !== undefined ? <pre tabIndex={0}><code>{currentSource.code}</code></pre>
                 : <p>Loading source code…</p>}

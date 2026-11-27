@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { Dispatch, MouseEvent, FocusEvent, SetStateAction } from 'react';
+import type { Dispatch, MouseEvent, FocusEvent, ReactNode, RefObject, SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
-import { isTauri } from '@tauri-apps/api/core';
 import {
   Background, BackgroundVariant, Controls, Handle, MarkerType, MiniMap, Position,
   ReactFlow, useNodesState, useReactFlow, useUpdateNodeInternals,
 } from '@xyflow/react';
-import type { Edge, NodeProps } from '@xyflow/react';
-import { Download, GitBranch, Map as MapIcon, Maximize2, Network } from 'lucide-react';
-import { createExportGraph, exportMermaid, exportSvg } from '../export/export.ts';
-import { saveLineage } from '../export/desktop.ts';
-import { layoutLineage } from './layout.ts';
-import { getNeighborhood } from './lineage.ts';
-import { ResourceIcon } from './ResourceIcon.tsx';
-import type { Direction, LineageGraph, ResourceFlowNode, Theme } from './types.ts';
+import type { Edge, Node, NodeProps } from '@xyflow/react';
+import { GitBranch, Map as MapIcon, Maximize2, Network } from 'lucide-react';
+import { layoutLineage } from '../utils/layout.ts';
+import { getNeighborhood } from '../utils/lineage.ts';
+import { ResourceIcon } from '../../../components/ResourceIcon.tsx';
+import type { Direction, ResourceFlowNode } from '../types.ts';
+import type { LineageGraph, Neighborhood, Theme } from '../../../types/lineage.ts';
 
 function ResourceNode({ id, data, selected }: NodeProps<ResourceFlowNode>) {
   const { resource, isRoot, upstreamCount, downstreamCount, expanded, onToggle, ports } = data;
@@ -80,22 +78,27 @@ function ResourceNode({ id, data, selected }: NodeProps<ResourceFlowNode>) {
   );
 }
 const nodeTypes = { resource: ResourceNode };
-const desktop = isTauri();
 const minimapNodeColor = (node: ResourceFlowNode) => {
   if (node.data.isRoot) return '#8183ef';
   const colors: Record<string, string> = { source: '#43b696', seed: '#d99b4c', exposure: '#d77f9d' };
   return colors[node.data.resource.type] || '#a3a8c1';
 };
 
-export function LineageCanvas({ graph, rootId, selectedId, setSelectedId, theme }: {
+export function LineageCanvas({ graph, rootId, selectedId, setSelectedId, theme, renderExport }: {
   graph: LineageGraph; rootId: string; selectedId: string; setSelectedId: Dispatch<SetStateAction<string>>; theme: Theme;
+  renderExport: (context: {
+    neighborhood: Neighborhood;
+    getNodes: () => Pick<Node, 'id' | 'position' | 'measured'>[];
+    edges: Pick<Edge, 'id'>[];
+    canvasRef: RefObject<HTMLDivElement>;
+    ready: boolean;
+    onError: (message: string) => void;
+  }) => ReactNode;
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ResourceFlowNode>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [layoutError, setLayoutError] = useState('');
   const [exportError, setExportError] = useState('');
-  const [exportFormat, setExportFormat] = useState('svg');
-  const [exporting, setExporting] = useState(false);
   const [layingOut, setLayingOut] = useState(false);
   const [showMinimap, setShowMinimap] = useState(true);
   const [expanded, setExpanded] = useState(() => ({
@@ -119,60 +122,6 @@ export function LineageCanvas({ graph, rootId, selectedId, setSelectedId, theme 
     nodes.length === neighborhood.ids.length && edges.length === neighborhood.edges.length &&
     neighborhood.ids.every((id) => nodes.some((node) => node.id === id)) &&
     neighborhood.edges.every(({ source, target }) => edges.some((edge) => edge.source === source && edge.target === target));
-
-  const exportLineage = async () => {
-    setExportError('');
-    setExporting(true);
-    try {
-      const snapshot = createExportGraph(graph, rootId, neighborhood, getNodes());
-      let content;
-      let type;
-      let extension;
-      if (exportFormat === 'json') {
-        content = JSON.stringify(snapshot, null, 2);
-        type = 'application/json';
-        extension = 'json';
-      } else if (exportFormat === 'mermaid') {
-        content = exportMermaid(snapshot);
-        type = 'text/plain';
-        extension = 'mmd';
-      } else {
-        if (!canvasRef.current) throw new Error('The graph is not ready to export.');
-        const pathElements = new Map(
-          [...canvasRef.current.querySelectorAll('.react-flow__edge')].map((element) => [
-            element.getAttribute('data-id'), element.querySelector<SVGPathElement>('.react-flow__edge-path'),
-          ]),
-        );
-        const paths = edges.map((edge) => {
-          const element = pathElements.get(edge.id);
-          const d = element?.getAttribute('d');
-          if (!element || !d) throw new Error('Some edges are not ready to export. Please try again.');
-          const { x, y, width, height } = element.getBBox();
-          return { d, bounds: { x, y, width, height } };
-        });
-        content = exportSvg(snapshot, paths, theme);
-        type = 'image/svg+xml';
-        extension = 'svg';
-      }
-      if (desktop) {
-        await saveLineage(content, extension, exportFormat);
-      } else {
-        const url = URL.createObjectURL(new Blob([content], { type }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `lineage.${extension}`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-    } catch (error) {
-      console.error('Lineage export failed:', error);
-      setExportError(`Could not export lineage: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setExporting(false);
-    }
-  };
 
   useEffect(() => {
     let active = true;
@@ -213,12 +162,7 @@ export function LineageCanvas({ graph, rootId, selectedId, setSelectedId, theme 
     <>
     <div className="graph-toolbar">
       <div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>{rootId ? `Exploring ${graph.resources[rootId].name}` : 'Select a resource to explore'}</small></div></div>
-      <div className="export-controls">
-        <select aria-label="Export format" value={exportFormat} onChange={(event) => setExportFormat(event.target.value)}>
-          <option value="svg">SVG</option><option value="json">JSON</option><option value="mermaid">Mermaid</option>
-        </select>
-        <button onClick={exportLineage} disabled={!readyToExport || exporting}><Download size={15} /> Export</button>
-      </div>
+      {renderExport({ neighborhood, getNodes, edges, canvasRef, ready: readyToExport, onError: setExportError })}
     </div>
     <div className="canvas" ref={canvasRef}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange}
