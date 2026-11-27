@@ -32,6 +32,7 @@ select:focus-visible {
     outline-offset: 2px;
 }
 .app {
+    --secondary-text: #586679;
     height: 100vh;
     min-height: 600px;
     display: flex;
@@ -74,14 +75,6 @@ select:focus-visible {
     color: #777ceb;
     font-weight: 600;
 }
-.brand small {
-    display: block;
-    font-size: 8px;
-    letter-spacing: 1.15px;
-    color: #a6afbd;
-    font-weight: 700;
-    margin-top: 1px;
-}
 .topbar-divider {
     height: 28px;
     width: 1px;
@@ -93,16 +86,6 @@ select:focus-visible {
     gap: 10px;
     font-weight: 700;
     color: #354054;
-}
-.workspace-label small {
-    display: block;
-    color: #a1aabc;
-    font-size: 10px;
-    font-weight: 500;
-    margin-top: 2px;
-}
-.workspace-label > svg {
-    color: #aab3c1;
 }
 .workspace-icon {
     width: 30px;
@@ -149,18 +132,6 @@ select:focus-visible {
 .icon-button:hover {
     background: #f7f8fb;
 }
-.avatar,
-.rail-avatar {
-    height: 32px;
-    width: 32px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: #e8e8ff;
-    color: #6564c9;
-    font-weight: 700;
-    font-size: 11px;
-}
 .app-body {
     display: flex;
     flex: 1;
@@ -194,18 +165,8 @@ select:focus-visible {
     place-items: center;
     border-radius: 10px;
 }
-.rail-button.active {
-    background: #eeeeff;
-    color: #6365de;
-}
 .rail-button:hover {
     color: #6365de;
-}
-.rail-avatar {
-    width: 29px;
-    height: 29px;
-    background: #f1f3f7;
-    color: #98a3b2;
 }
 .sidebar {
     width: 270px;
@@ -217,7 +178,7 @@ select:focus-visible {
     min-height: 0;
 }
 .sidebar-head {
-    padding: 27px 22px 0;
+    padding: 27px 22px 22px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -232,7 +193,7 @@ select:focus-visible {
     font-family: Manrope, sans-serif;
     font-size: 19px;
     color: #273147;
-    margin: 7px 0 0;
+    margin: 0;
     letter-spacing: -0.6px;
 }
 .icon-button {
@@ -243,12 +204,6 @@ select:focus-visible {
     border-radius: 6px;
     display: grid;
     place-items: center;
-}
-.sidebar-description {
-    font-size: 11px;
-    color: #98a2b3;
-    margin: 8px 22px 22px;
-    line-height: 1.5;
 }
 .search-box {
     display: flex;
@@ -406,39 +361,6 @@ select:focus-visible {
     font-size: 11px;
     line-height: 1.5;
 }
-.sidebar-footer {
-    border-top: 1px solid #edf0f5;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.footer-icon {
-    background: #f1f2ff;
-    color: #7779dc;
-    width: 31px;
-    height: 31px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-}
-.sidebar-footer strong,
-.sidebar-footer small {
-    display: block;
-}
-.sidebar-footer strong {
-    font-size: 11px;
-}
-.sidebar-footer small {
-    color: #a2acba;
-    font-size: 10px;
-    margin-top: 3px;
-}
-.footer-status {
-    margin-left: auto;
-    color: #50c79f;
-    font-size: 10px;
-}
 .main {
     flex: 1;
     min-width: 0;
@@ -446,27 +368,11 @@ select:focus-visible {
     flex-direction: column;
     padding: 23px 27px 15px;
 }
-.breadcrumbs {
-    display: flex;
-    gap: 9px;
-    align-items: center;
-    color: #a6afbe;
-    font-size: 10px;
-}
-.breadcrumbs button {
-    border: 0;
-    background: none;
-    color: #a6afbe;
-    padding: 0;
-}
-.breadcrumbs span:last-child {
-    color: #667285;
-}
 .title-row {
     display: flex;
     justify-content: space-between;
     align-items: end;
-    margin: 22px 0;
+    margin: 0 0 22px;
 }
 .title-with-icon {
     display: flex;
@@ -489,20 +395,6 @@ select:focus-visible {
     letter-spacing: -0.9px;
     color: #273147;
     margin: 0;
-}
-.beta {
-    font-size: 8px;
-    font-weight: 800;
-    letter-spacing: 0.6px;
-    color: #7779d6;
-    background: #ededff;
-    border-radius: 4px;
-    padding: 4px 6px;
-}
-.title-row p {
-    margin: 8px 0 0;
-    color: #99a3b2;
-    font-size: 11px;
 }
 .heading-summary {
     display: flex;
@@ -864,16 +756,6 @@ select:focus-visible {
     background: #efefff;
     color: #7779df;
     border-radius: 6px;
-}
-.page-foot {
-    display: flex;
-    justify-content: space-between;
-    padding-top: 13px;
-    color: #b0b9c5;
-    font-size: 10px;
-}
-.heart {
-    color: #9c9cf0;
 }
 .empty-canvas,
 .loading-state {
@@ -1299,10 +1181,7 @@ select:focus-visible {
         font-size: 19px;
     }
     .title-row {
-        margin: 16px 0;
-    }
-    .title-row p {
-        font-size: 10px;
+        margin: 0 0 16px;
     }
     .graph-toolbar {
         height: auto;
@@ -1317,17 +1196,11 @@ select:focus-visible {
         overflow: auto;
         white-space: nowrap;
     }
-    .page-foot span:last-child {
-        display: none;
-    }
     .import-button {
         font-size: 0;
     }
     .import-button svg {
         width: 16px;
-    }
-    .avatar {
-        display: none;
     }
     .canvas-hint {
         display: none;
@@ -1462,6 +1335,7 @@ select:focus-visible {
 }
 
 .app[data-theme="dark"] {
+    --secondary-text: #bdc9d9;
     color-scheme: dark;
     color: #dce5f2;
     background: #111827;
@@ -1490,7 +1364,6 @@ select:focus-visible {
     background: #344357;
 }
 .app[data-theme="dark"] .list-heading,
-.app[data-theme="dark"] .sidebar-footer,
 .app[data-theme="dark"] .graph-toolbar,
 .app[data-theme="dark"] .graph-legend,
 .app[data-theme="dark"] .detail-section,
@@ -1516,7 +1389,6 @@ select:focus-visible {
 .app[data-theme="dark"] .resource-item,
 .app[data-theme="dark"] .detail-section dd,
 .app[data-theme="dark"] .column-row strong,
-.app[data-theme="dark"] .breadcrumbs span:last-child,
 .app[data-theme="dark"] .filter-row select,
 .app[data-theme="dark"] .file-label,
 .app[data-theme="dark"] .empty-canvas strong,
@@ -1525,7 +1397,6 @@ select:focus-visible {
 }
 .app[data-theme="dark"] .node-heading span,
 .app[data-theme="dark"] .local-badge,
-.app[data-theme="dark"] .page-foot,
 .app[data-theme="dark"] .branch-hint,
 .app[data-theme="dark"] .canvas-hint {
     color: #a7b5c8;
@@ -1550,8 +1421,7 @@ select:focus-visible {
 .app[data-theme="dark"] .branch-control:hover {
     background: #304158;
 }
-.app[data-theme="dark"] .resource-item.active,
-.app[data-theme="dark"] .rail-button.active {
+.app[data-theme="dark"] .resource-item.active {
     color: #c0c3ff;
     background: #34365e;
 }
@@ -1568,13 +1438,11 @@ select:focus-visible {
 .app[data-theme="dark"] .workspace-icon,
 .app[data-theme="dark"] .title-icon,
 .app[data-theme="dark"] .graph-icon,
-.app[data-theme="dark"] .footer-icon,
 .app[data-theme="dark"] .list-icon,
 .app[data-theme="dark"] .type-icon,
 .app[data-theme="dark"] .detail-icon,
 .app[data-theme="dark"] .legend-icon,
 .app[data-theme="dark"] .type-label,
-.app[data-theme="dark"] .beta,
 .app[data-theme="dark"] .detail-section h3 span,
 .app[data-theme="dark"] .file-label input::file-selector-button,
 .app[data-theme="dark"] .focus-button,
@@ -1595,8 +1463,6 @@ select:focus-visible {
     color: #f0a2be !important;
 }
 .app[data-theme="dark"] .count-pill,
-.app[data-theme="dark"] .avatar,
-.app[data-theme="dark"] .rail-avatar,
 .app[data-theme="dark"] .details-note,
 .app[data-theme="dark"] .modal code {
     background: #263449;
@@ -1638,4 +1504,39 @@ select:focus-visible {
     background: #482a33;
     border-color: #90505c;
     color: #ffc0c8;
+}
+
+.app .eyebrow,
+.app .rail-button:not(:hover),
+.app .icon-button,
+.app .search-box input::placeholder,
+.app .filter-row,
+.app .list-heading,
+.app .count-pill,
+.app .resource-name small,
+.app .list-more,
+.app .heading-summary,
+.app .graph-title small,
+.app .canvas-overlay,
+.app .canvas-hint,
+.app .node-heading span,
+.app .graph-legend,
+.app .graph-legend > span:first-child,
+.app .empty-canvas,
+.app .loading-state,
+.app .source-view,
+.app .details-tabs button:not([aria-selected="true"]),
+.app .details-description,
+.app .detail-section h3,
+.app .detail-section dt,
+.app .column-row small,
+.app .column-row p,
+.app .no-columns,
+.app .details-note,
+.app .modal > p,
+.app .modal > small,
+.app .import-divider,
+.app .file-label span,
+.app .file-label input {
+    color: var(--secondary-text);
 }

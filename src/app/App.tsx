@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { isTauri } from '@tauri-apps/api/core';
 import { ReactFlowProvider } from '@xyflow/react';
 import {
-  ArrowUpRight, Boxes, ChevronDown, CircleHelp, Database, Filter, GitBranch, Layers2,
+  ArrowUpRight, Boxes, CircleHelp, Database, Filter, GitBranch, Layers2,
   Moon, Network, PanelLeftClose, Search, Sun, Table2, Upload,
 } from 'lucide-react';
 import { ImportDialog } from '../features/artifacts/components/ImportDialog.tsx';
@@ -125,29 +125,27 @@ export function App() {
 
   return <div className="app" data-theme={theme}>
     <header className="topbar">
-      <div className="brand"><div className="brand-mark"><GitBranch size={19} /></div><div><strong>lineage<span>studio</span></strong><small>YOUR DATA, CONNECTED</small></div></div>
+      <div className="brand"><div className="brand-mark"><GitBranch size={19} /></div><strong>lineage<span>studio</span></strong></div>
       <div className="topbar-divider" />
-      <div className="workspace-label"><span className="workspace-icon"><Boxes size={15} /></span><span>{graph?.metadata.project_name || 'dbt project'}<small>Workspace</small></span><ChevronDown size={14} /></div>
+      <div className="workspace-label"><span className="workspace-icon"><Boxes size={15} /></span><span>{graph?.metadata.project_name || 'dbt project'}</span></div>
       <div className="topbar-spacer" />
       <div className="local-badge"><span className="live-dot" /> Local workspace</div>
       <button className="theme-button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
         {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
       </button>
       <button className="import-button" onClick={() => { setShowImport(true); setError(''); }}><Upload size={15} /> Import artifacts</button>
-      <div className="avatar">LS</div>
     </header>
 
     <div className="app-body">
       <aside className="rail">
-        <div className="rail-group"><button className="rail-button active" title="Lineage"><Network size={19} /></button><button className="rail-button" title="Browse resources" onClick={() => setSidebarOpen(true)}><Boxes size={19} /></button></div>
-        <div className="rail-bottom"><button className="rail-button" title="About this view" onClick={() => setShowImport(true)}><CircleHelp size={19} /></button><div className="rail-avatar">L</div></div>
+        <div className="rail-group"><button className="rail-button" title="Browse resources" onClick={() => setSidebarOpen(true)}><Boxes size={19} /></button></div>
+        <div className="rail-bottom"><button className="rail-button" title="About this view" onClick={() => setShowImport(true)}><CircleHelp size={19} /></button></div>
       </aside>
       {sidebarOpen && <aside className="sidebar">
-        <div className="sidebar-head"><div><span className="eyebrow">YOUR WORKSPACE</span><h2>Explore</h2></div><button className="icon-button" title="Hide explorer" onClick={() => setSidebarOpen(false)}><PanelLeftClose size={17} /></button></div>
-        <p className="sidebar-description">Discover and explore your data assets.</p>
+        <div className="sidebar-head"><h2>Explore</h2><button className="icon-button" title="Hide explorer" onClick={() => setSidebarOpen(false)}><PanelLeftClose size={17} /></button></div>
         <label className="search-box"><Search size={16} /><input placeholder="Search resources..." value={search} onChange={(event) => setSearch(event.target.value)} /></label>
         <div className="filter-row"><span><Filter size={13} /> RESOURCE TYPE</span><select aria-label="Filter resource type" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All types</option>{Object.keys(counts).sort().map((type) => <option key={type} value={type}>{type}</option>)}</select></div>
-        <div className="list-heading"><span>RESOURCES <span className="count-pill">{matches.length.toLocaleString()}</span></span><span>NAME</span></div>
+        <div className="list-heading"><span>RESOURCES <span className="count-pill">{matches.length.toLocaleString()}</span></span></div>
         <div className="resource-list">
           {matches.slice(0, 100).map((resource) => <button key={resource.id} className={`resource-item ${rootId === resource.id ? 'active' : ''}`} onClick={() => focus(resource.id)} title={resource.id}>
             <span className={`list-icon ${resource.type}`}><ResourceIcon type={resource.type} size={15} /></span><span className="resource-name"><strong>{resource.name}</strong><small>{resource.schema || resource.packageName || resource.type}</small></span><span className="item-chevron">›</span>
@@ -155,19 +153,16 @@ export function App() {
           {matches.length > 100 && <div className="list-more">Showing 100 of {matches.length.toLocaleString()} resources. Search to narrow results.</div>}
           {graph && matches.length === 0 && <div className="list-more">No matching resources.</div>}
         </div>
-        <div className="sidebar-footer"><span className="footer-icon"><GitBranch size={16} /></span><span><strong>dbt lineage</strong><small>Powered by your artifacts</small></span><span className="footer-status">●</span></div>
       </aside>}
       <main className="main">
         <div className="page-heading">
-          <div className="breadcrumbs"><button onClick={() => setSidebarOpen(true)}>Workspace</button><span>/</span><span>Lineage explorer</span></div>
-          <div className="title-row"><div><div className="title-with-icon"><span className="title-icon"><Network size={20} /></span><h1>Lineage explorer</h1><span className="beta">LOCAL</span></div><p>Understand how your data flows, from source to insight.</p></div><div className="heading-summary"><span><i className="summary-dot model-dot" /> {counts.model?.toLocaleString() || 0} models</span><span><i className="summary-dot source-dot" /> {counts.source?.toLocaleString() || 0} sources</span></div></div>
+          <div className="title-row"><div className="title-with-icon"><span className="title-icon"><Network size={20} /></span><h1>Lineage explorer</h1></div><div className="heading-summary"><span><i className="summary-dot model-dot" /> {counts.model?.toLocaleString() || 0} models</span><span><i className="summary-dot source-dot" /> {counts.source?.toLocaleString() || 0} sources</span></div></div>
         </div>
         <div className="graph-card">
           {graph ? <ReactFlowProvider key={graphVersion}><LineageCanvas graph={graph} rootId={rootId} selectedId={selectedId} setSelectedId={setSelectedId} theme={theme}
             renderExport={(context) => <ExportControls {...context} graph={graph} rootId={rootId} theme={theme} />} /></ReactFlowProvider> : <><div className="graph-toolbar"><div className="graph-title"><span className="graph-icon"><GitBranch size={16} /></span><div><strong>Data lineage</strong><small>Select a resource to explore</small></div></div></div><div className="loading-state"><Network size={32} /><strong>{status || 'No artifacts loaded'}</strong><span>{error || 'Preparing your lineage graph'}</span><button onClick={() => setShowImport(true)}>Import artifacts</button></div></>}
           <div className="graph-legend"><span>LEGEND</span><span><i className="legend-icon source"><Database size={12} /></i> Source</span><span><i className="legend-icon model"><Layers2 size={12} /></i> Model</span><span><i className="legend-icon seed"><Table2 size={12} /></i> Seed</span><span><i className="legend-icon exposure"><ArrowUpRight size={12} /></i> Exposure</span><div className="legend-spacer" /><span>Model-level lineage</span></div>
         </div>
-        <div className="page-foot"><span>Built for a clearer view of your data.</span><span>Data stays in your local workspace <span className="heart">✦</span></span></div>
       </main>
       {selected && graph && <ResourceDetails resource={selected} graph={graph} rootId={rootId} readSource={readSource}
         onClose={() => setSelectedId('')} onFocus={focus} />}
