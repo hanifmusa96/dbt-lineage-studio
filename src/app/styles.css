@@ -908,15 +908,67 @@ select:focus-visible {
     font-weight: 700;
     font-size: 11px;
 }
-.details {
-    width: 285px;
+.details-panel {
+    position: relative;
     flex: none;
+    min-width: 0;
+}
+.details-resize {
+    position: absolute;
+    z-index: 1;
+    left: -5px;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    cursor: col-resize;
+    touch-action: none;
+}
+.details-resize:hover,
+.details-resize:focus-visible {
+    background: #8183ef66;
+    outline: none;
+}
+.details {
+    height: 100%;
     background: #fff;
     border-left: 1px solid #e9ecf2;
     padding: 25px 20px 20px;
     overflow: auto;
     display: flex;
     flex-direction: column;
+}
+.details-tabs {
+    display: flex;
+    gap: 16px;
+    border-bottom: 1px solid #e9ecf2;
+    margin-top: 20px;
+}
+.details-tabs button {
+    padding: 8px 0;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: #788599;
+    font-weight: 700;
+    font-size: 11px;
+}
+.details-tabs button[aria-selected="true"] {
+    color: #6264df;
+    border-bottom-color: #6264df;
+}
+.source-view {
+    min-width: 0;
+    color: #788599;
+    font-size: 11px;
+    line-height: 1.6;
+}
+.source-view pre {
+    overflow: auto;
+    padding: 12px;
+    border-radius: 7px;
+    background: #f7f8fc;
+    color: #34445a;
+    font-size: 11px;
 }
 .details-top {
     display: flex;
@@ -1078,6 +1130,35 @@ select:focus-visible {
 .modal form {
     margin-top: 22px;
 }
+.project-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 11px;
+    border: 1px solid #dcdff0;
+    border-radius: 8px;
+    background: #f4f4ff;
+    color: #6264df;
+    font-weight: 700;
+}
+.project-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+.folder-input {
+    display: none;
+}
+.import-divider {
+    margin-top: 20px;
+    color: #a2acb9;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+}
 .file-label {
     display: block;
     color: #536075;
@@ -1146,9 +1227,6 @@ select:focus-visible {
     line-height: 1.5;
 }
 @media (max-width: 1250px) {
-    .details {
-        width: 240px;
-    }
     .sidebar {
         width: 230px;
     }
@@ -1160,7 +1238,7 @@ select:focus-visible {
     }
 }
 @media (max-width: 900px) {
-    .details {
+    .details-panel {
         position: absolute;
         right: 0;
         top: 70px;
@@ -1201,9 +1279,6 @@ select:focus-visible {
         bottom: 0;
         z-index: 4;
         box-shadow: 8px 0 20px #2b3d5110;
-    }
-    .details {
-        width: min(285px, calc(100vw - 48px));
     }
     .main {
         padding: 14px 10px;
@@ -1409,6 +1484,22 @@ select:focus-visible {
 .app[data-theme="dark"] .detail-section,
 .app[data-theme="dark"] .column-row {
     border-color: #344357;
+}
+.app[data-theme="dark"] .details-tabs {
+    border-color: #344357;
+}
+.app[data-theme="dark"] .details-tabs button {
+    color: #a7b5c8;
+}
+.app[data-theme="dark"] .details-tabs button[aria-selected="true"] {
+    color: #c0c3ff;
+    border-bottom-color: #c0c3ff;
+}
+.app[data-theme="dark"] .source-view pre,
+.app[data-theme="dark"] .project-button {
+    background: #263449;
+    border-color: #43536b;
+    color: #dce5f2;
 }
 .app[data-theme="dark"] .resource-item,
 .app[data-theme="dark"] .detail-section dd,

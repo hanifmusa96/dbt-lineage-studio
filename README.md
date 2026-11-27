@@ -8,13 +8,15 @@ Install [Tauri's desktop prerequisites](https://v2.tauri.app/start/prerequisites
 
 1. Generate dbt artifacts with `dbt compile` and `dbt docs generate`, or use existing artifacts.
 2. Run `npm install` and `npm run tauri dev`.
-3. Select `manifest.json` and `catalog.json` in the import dialog.
+3. Choose your dbt project folder in the import dialog, or select `manifest.json` and `catalog.json` separately.
 
-Run `npm run tauri build` to build a desktop bundle for the current platform. Platform-specific signing and distribution may require additional setup. The desktop app does not automatically load a project directory: select both files each time you launch it. Artifacts are read locally and are not persisted by the app. Export opens a native save dialog.
+Run `npm run tauri build` to build a desktop bundle for the current platform. Platform-specific signing and distribution may require additional setup. Select a project or artifacts each time you launch the desktop app. Files are read locally and are not persisted by the app. Export opens a native save dialog.
 
 ## Browser development
 
-With Node.js 22.18 or newer, run `npm install` and `npm run dev`, then open the local URL printed by Vite. The development and preview servers automatically load `target/manifest.json` and `target/catalog.json`; you can also select files using **Import artifacts**. They bind to localhost. `npm run build` builds the frontend; `npm run preview` serves it with the same local-artifact endpoints. A separately hosted static build can use the import dialog instead.
+With Node.js 22.18 or newer, run `npm install` and `npm run dev`, then open the local URL printed by Vite. The development and preview servers automatically load `target/manifest.json` and `target/catalog.json`; you can also select a project folder or separate files using **Import artifacts**. Folder selection requires a browser with directory upload support. The servers bind to localhost. `npm run build` builds the frontend; `npm run preview` serves it with the same local-artifact endpoints. A separately hosted static build can use the import dialog instead.
+
+Choosing a project loads `target/manifest.json` and `target/catalog.json` from that folder. Select a model in the graph and switch between **Details** and **Raw code** to read its source file. Source code is available only when a project folder has been selected; separately imported or automatically loaded artifacts do not grant access to project files. Dependency models are looked up under the default `dbt_packages/<package>/` directory; custom package installation paths are not supported. The desktop app restricts project reads to the selected folder, including resolved symlinks. In the browser, files are available from the selected folder upload and may need to be reselected after changes. Drag the left edge of the details panel to resize it, or focus the edge and use the left and right arrow keys.
 
 Search for a resource, select it to focus its graph, and click a graph node for metadata. Use the **+ / −** buttons on the left and right of a node to expand or fold its upstream and downstream connections. Shared resources remain visible while connected through another expanded branch; reopening a branch restores its previous expansions. Graphs are limited to 100 nodes to keep large projects responsive; focus another resource to continue exploring.
 

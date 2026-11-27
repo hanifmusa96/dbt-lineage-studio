@@ -3,11 +3,14 @@ import type { FormEvent } from 'react';
 import { isTauri } from '@tauri-apps/api/core';
 import { ReactFlowProvider } from '@xyflow/react';
 import {
-  ArrowUpRight, Boxes, ChevronDown, CircleHelp, Database, FileJson, Filter, GitBranch, Layers2,
-  Moon, Network, PanelLeftClose, Search, Sun, Table2, Upload, X,
+  ArrowUpRight, Boxes, ChevronDown, CircleHelp, Database, Filter, GitBranch, Layers2,
+  Moon, Network, PanelLeftClose, Search, Sun, Table2, Upload,
 } from 'lucide-react';
 import { ImportDialog } from '../features/artifacts/ImportDialog.tsx';
+import { browserProject, chooseDesktopProject, loadProjectArtifacts } from '../features/artifacts/project.ts';
+import type { Project } from '../features/artifacts/project.ts';
 import { LineageCanvas } from '../features/lineage/LineageCanvas.tsx';
+import { ResourceDetails } from '../features/lineage/ResourceDetails.tsx';
 import { ResourceIcon } from '../features/lineage/ResourceIcon.tsx';
 import { buildLineage, defaultResource } from '../features/lineage/lineage.ts';
 import type { LineageGraph, Theme } from '../features/lineage/types.ts';
@@ -24,6 +27,7 @@ export function App() {
     }
   });
   const [graph, setGraph] = useState<LineageGraph | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
   const [rootId, setRootId] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [search, setSearch] = useState('');
@@ -37,10 +41,10 @@ export function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 600);
   const requestId = useRef(0);
 
-  const loadGraph = useCallback((manifest: unknown, catalog: unknown) => {
+  const loadGraph = useCallback((manifest: unknown, catalog: unknown, selectedProject: Project | null = null) => {
     const next = buildLineage(manifest, catalog);
     const first = defaultResource(next);
-    setGraph(next); setRootId(first); setSelectedId(''); setSearch(''); setFilter('all');
+    setGraph(next); setProject(selectedProject); setRootId(first); setSelectedId(''); setSearch(''); setFilter('all');
     setGraphVersion((version) => version + 1);
     setStatus(''); setError(''); setShowImport(false);
   }, []);
@@ -72,6 +76,21 @@ export function App() {
       if (request === requestId.current) loadGraph(manifest, catalog);
     } catch (err) {
       if (request === requestId.current) { setError(`Could not import artifacts: ${err instanceof Error ? err.message : String(err)}`); setStatus(''); }
+    }
+  }
+
+  async function importProject(selectProject: () => Promise<Project | null>) {
+    const request = ++requestId.current;
+    setStatus('Opening project…'); setError('');
+    try {
+      const selectedProject = await selectProject();
+      if (request !== requestId.current) return;
+      if (!selectedProject) { setStatus(''); return; }
+      setStatus('Reading project artifacts…');
+      const [manifest, catalog] = await loadProjectArtifacts(selectedProject);
+      if (request === requestId.current) loadGraph(manifest, catalog, selectedProject);
+    } catch (err) {
+      if (request === requestId.current) { setError(`Could not open project: ${err instanceof Error ? err.message : String(err)}`); setStatus(''); }
     }
   }
 
@@ -139,18 +158,14 @@ export function App() {
         </div>
         <div className="page-foot"><span>Built for a clearer view of your data.</span><span>Data stays in your local workspace <span className="heart">✦</span></span></div>
       </main>
-      {selected && <aside className="details">
-        <div className="details-top"><span className="eyebrow">RESOURCE DETAILS</span><button className="icon-button" onClick={() => setSelectedId('')} title="Close details"><X size={17} /></button></div>
-        <div className="details-identity"><span className={`detail-icon ${selected.type}`}><ResourceIcon type={selected.type} size={20} /></span><div><h2>{selected.name}</h2><span className={`type-label ${selected.type}`}>{selected.type}</span></div></div>
-        <p className="details-description">{selected.description || 'No description provided for this resource.'}</p>
-        {selected.id !== rootId && <button className="focus-button" onClick={() => focus(selected.id)}><Network size={15} /> Explore lineage</button>}
-        <div className="detail-section"><h3>OVERVIEW</h3><dl><div><dt>Package</dt><dd>{selected.packageName || '—'}</dd></div><div><dt>Schema</dt><dd>{selected.schema || '—'}</dd></div><div><dt>Database</dt><dd>{selected.database || '—'}</dd></div><div><dt>Materialization</dt><dd>{selected.materialization || '—'}</dd></div><div><dt>Upstream</dt><dd>{graph.parents[selected.id].length} resources</dd></div><div><dt>Downstream</dt><dd>{graph.children[selected.id].length} resources</dd></div></dl></div>
-        <div className="detail-section columns-section"><h3>COLUMNS <span>{selected.columns.length}</span></h3>{selected.columns.length ? selected.columns.map((column, i) => <div className="column-row" key={`${column.name}-${i}`}><div><Table2 size={14} /><strong>{column.name}</strong></div><small>{column.type || column.data_type || '—'}</small>{column.comment && <p>{column.comment}</p>}</div>) : <p className="no-columns">No column metadata available.</p>}</div>
-        <div className="details-note"><FileJson size={15} /><span>Column metadata comes from your dbt artifacts. Connections represent resource dependencies.</span></div>
-      </aside>}
+      {selected && graph && <ResourceDetails resource={selected} graph={graph} rootId={rootId} project={project}
+        onClose={() => setSelectedId('')} onFocus={focus} />}
     </div>
-    {showImport && <ImportDialog hasGraph={Boolean(graph)} error={error} status={status}
-      onClose={() => setShowImport(false)} onSubmit={importFiles} onManifest={setManifestFile} onCatalog={setCatalogFile} />}
+    {showImport && <ImportDialog hasGraph={Boolean(graph)} error={error} status={status} desktop={desktop}
+      onClose={() => setShowImport(false)} onSubmit={importFiles} onManifest={setManifestFile} onCatalog={setCatalogFile}
+      onProject={() => { void importProject(chooseDesktopProject); }}
+      onProjectFiles={(files) => { void importProject(async () => browserProject(files)); }}
+      onUnsupported={() => setError('This browser does not support selecting a folder. Use a supported browser or the desktop app.')} />}
   </div>;
 }
 
