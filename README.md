@@ -77,8 +77,17 @@ Drag the left edge of the details panel to resize it, or focus the edge and use 
 
 ```sh
 npm test             # Run tests
+npm run test:e2e     # Run browser smoke tests
 npm run typecheck    # Check TypeScript
 npm run build        # Type-check and build the frontend
 ```
 
 The app is organized by feature under [`src/features`](src/features), with shared components, styles, and types under `src/`. Tests are grouped by feature in [`src/testing`](src/testing). The Tauri desktop backend is in [`src-tauri`](src-tauri).
+
+For browser tests, install Chromium once with `npx playwright install chromium`.
+
+## GitHub automation
+
+CI runs the frontend tests and build, browser smoke tests, and desktop builds and Rust tests on macOS and Windows. Dependabot proposes weekly npm, Cargo, and GitHub Actions updates. CodeQL scans JavaScript and TypeScript; code scanning must be available and enabled for the repository. Enable Dependabot alerts and secret scanning in GitHub repository settings where available.
+
+Pushing a tag such as `v1.0.0` builds macOS Apple Silicon and Intel DMGs and a Windows x64 NSIS installer, then creates a draft GitHub Release. The tag must match the versions in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`. Review the draft before publishing. macOS packages use ad-hoc signing and are **not notarized**; the Windows installer is unsigned. Public distribution requires platform signing and, for macOS, notarization credentials and additional setup.

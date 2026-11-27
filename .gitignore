@@ -3,3 +3,5 @@ dist/
 target/
 .DS_Store
 /README.local.md
+/playwright-report/
+/test-results/
