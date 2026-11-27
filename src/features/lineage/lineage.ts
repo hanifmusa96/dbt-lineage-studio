@@ -32,20 +32,20 @@ interface Catalog {
 
 const SUPPORTED = new Set(['model', 'source', 'seed', 'snapshot', 'exposure', 'analysis', 'metric', 'semantic_model', 'saved_query']);
 
-export function buildLineage(manifestInput: unknown, catalogInput: unknown): LineageGraph {
+export function buildLineage(manifestInput: unknown, catalogInput?: unknown): LineageGraph {
   if (!manifestInput || typeof manifestInput !== 'object' || !('nodes' in manifestInput) || !manifestInput.nodes || typeof manifestInput.nodes !== 'object' || Array.isArray(manifestInput.nodes)) {
     throw new Error('Invalid manifest.json: expected a nodes object.');
   }
-  if (!catalogInput || typeof catalogInput !== 'object' || !('nodes' in catalogInput) || !catalogInput.nodes || typeof catalogInput.nodes !== 'object' || Array.isArray(catalogInput.nodes)) {
+  if (catalogInput !== undefined && (!catalogInput || typeof catalogInput !== 'object' || !('nodes' in catalogInput) || !catalogInput.nodes || typeof catalogInput.nodes !== 'object' || Array.isArray(catalogInput.nodes))) {
     throw new Error('Invalid catalog.json: expected a nodes object.');
   }
   const manifest = manifestInput as Manifest;
-  const catalog = catalogInput as Catalog;
+  const catalog = catalogInput as Catalog | undefined;
   const resources: LineageGraph['resources'] = {};
   for (const collection of ['nodes', 'sources', 'exposures', 'metrics', 'semantic_models', 'saved_queries'] as const) {
     for (const [id, resource] of Object.entries(manifest[collection] || {})) {
       if (!resource || !SUPPORTED.has(resource.resource_type)) continue;
-      const catalogNode = (resource.resource_type === 'source' ? catalog.sources : catalog.nodes)?.[id];
+      const catalogNode = (resource.resource_type === 'source' ? catalog?.sources : catalog?.nodes)?.[id];
       const columnsByName = { ...(resource.columns || {}) };
       for (const [name, column] of Object.entries(catalogNode?.columns || {})) {
         columnsByName[name] = { ...columnsByName[name], ...column };

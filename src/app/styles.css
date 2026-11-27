@@ -1190,6 +1190,18 @@ select:focus-visible {
     margin-right: 8px;
     cursor: pointer;
 }
+.clear-catalog {
+    display: block;
+    margin: -5px 0 15px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #6264df;
+    font-size: 11px;
+}
+.app[data-theme="dark"] .clear-catalog {
+    color: #c0c3ff;
+}
 .submit-button {
     width: 100%;
     border: 0;

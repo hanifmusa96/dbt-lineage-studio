@@ -45,6 +45,7 @@ export function App() {
     const next = buildLineage(manifest, catalog);
     const first = defaultResource(next);
     setGraph(next); setProject(selectedProject); setRootId(first); setSelectedId(''); setSearch(''); setFilter('all');
+    setManifestFile(null); setCatalogFile(null);
     setGraphVersion((version) => version + 1);
     setStatus(''); setError(''); setShowImport(false);
   }, []);
@@ -54,9 +55,13 @@ export function App() {
     const request = ++requestId.current;
     async function loadLocal() {
       try {
-        const responses = await Promise.all(['/api/artifacts/manifest', '/api/artifacts/catalog'].map((url) => fetch(url)));
-        if (responses.some((response) => !response.ok)) throw new Error('Could not load target/manifest.json and target/catalog.json. Generate them with dbt or import both files.');
-        const [manifest, catalog] = await Promise.all(responses.map((response) => response.json()));
+        const [manifestResponse, catalogResponse] = await Promise.all(['/api/artifacts/manifest', '/api/artifacts/catalog'].map((url) => fetch(url)));
+        if (!manifestResponse.ok) throw new Error('Could not load target/manifest.json. Generate it with dbt or import it.');
+        if (!catalogResponse.ok && catalogResponse.status !== 404) throw new Error(`Could not load target/catalog.json (HTTP ${catalogResponse.status}).`);
+        const [manifest, catalog] = await Promise.all([
+          manifestResponse.json(),
+          catalogResponse.status === 404 ? undefined : catalogResponse.json(),
+        ]);
         if (request === requestId.current) loadGraph(manifest, catalog);
       } catch (err) {
         if (request === requestId.current) { setError(err instanceof Error ? err.message : String(err)); setStatus(''); setShowImport(true); }
@@ -68,11 +73,11 @@ export function App() {
 
   async function importFiles(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!manifestFile || !catalogFile) { setError('Choose both manifest.json and catalog.json.'); return; }
+    if (!manifestFile) { setError('Choose manifest.json.'); return; }
     const request = ++requestId.current;
     setStatus('Reading selected artifacts…'); setError('');
     try {
-      const [manifest, catalog] = await Promise.all([manifestFile.text().then(JSON.parse), catalogFile.text().then(JSON.parse)]);
+      const [manifest, catalog] = await Promise.all([manifestFile.text().then(JSON.parse), catalogFile?.text().then(JSON.parse)]);
       if (request === requestId.current) loadGraph(manifest, catalog);
     } catch (err) {
       if (request === requestId.current) { setError(`Could not import artifacts: ${err instanceof Error ? err.message : String(err)}`); setStatus(''); }
@@ -161,8 +166,8 @@ export function App() {
       {selected && graph && <ResourceDetails resource={selected} graph={graph} rootId={rootId} project={project}
         onClose={() => setSelectedId('')} onFocus={focus} />}
     </div>
-    {showImport && <ImportDialog hasGraph={Boolean(graph)} error={error} status={status} desktop={desktop}
-      onClose={() => setShowImport(false)} onSubmit={importFiles} onManifest={setManifestFile} onCatalog={setCatalogFile}
+    {showImport && <ImportDialog hasGraph={Boolean(graph)} hasCatalog={Boolean(catalogFile)} error={error} status={status} desktop={desktop}
+      onClose={() => { setShowImport(false); setManifestFile(null); setCatalogFile(null); }} onSubmit={importFiles} onManifest={setManifestFile} onCatalog={setCatalogFile}
       onProject={() => { void importProject(chooseDesktopProject); }}
       onProjectFiles={(files) => { void importProject(async () => browserProject(files)); }}
       onUnsupported={() => setError('This browser does not support selecting a folder. Use a supported browser or the desktop app.')} />}

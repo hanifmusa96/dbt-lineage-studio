@@ -21,12 +21,31 @@ test('reads project artifacts and model files from a browser folder selection', 
   await assert.rejects(project.readFile('models/missing.sql'), /Could not find models\/missing.sql/);
 });
 
-test('reports missing artifacts, invalid JSON, and invalid folder selections', async () => {
-  await assert.rejects(loadProjectArtifacts(browserProject([projectFile('project/target/manifest.json', '{}')])), /target\/catalog.json/);
+test('loads a project with no catalog and still requires a manifest', async () => {
+  const project = browserProject([projectFile('project/target/manifest.json', '{"nodes":{}}')]);
+  assert.deepEqual(await loadProjectArtifacts(project), [{ nodes: {} }, undefined]);
+  await assert.rejects(loadProjectArtifacts(browserProject([projectFile('project/target/catalog.json', '{}')])), /target\/manifest.json/);
+});
+
+test('reports invalid artifacts, read errors, and invalid folder selections', async () => {
   await assert.rejects(loadProjectArtifacts(browserProject([
     projectFile('project/target/manifest.json', '{'),
     projectFile('project/target/catalog.json', '{}'),
   ])), SyntaxError);
+  await assert.rejects(loadProjectArtifacts(browserProject([
+    projectFile('project/target/manifest.json', '{}'),
+    projectFile('project/target/catalog.json', '{'),
+  ])), SyntaxError);
+  await assert.rejects(loadProjectArtifacts({
+    name: 'project',
+    async hasFile() { return true; },
+    async readFile(path) { if (path.endsWith('catalog.json')) throw new Error('read failed'); return '{}'; },
+  }), /read failed/);
+  await assert.rejects(loadProjectArtifacts({
+    name: 'project',
+    async hasFile() { throw new Error('permission denied'); },
+    async readFile() { return '{}'; },
+  }), /permission denied/);
   assert.throws(() => browserProject([new File([''], 'manifest.json')]), /project folder/);
   assert.throws(() => browserProject([projectFile('one/a', ''), projectFile('two/b', '')]), /single project folder/);
 });
@@ -54,6 +73,10 @@ test('desktop selection reads only through the project commands and propagates e
     invoke: async (command: string, payload?: { projectId: number; path: string }) => {
       calls.push(command);
       if (command === 'choose_project') return cancel ? null : [7, '/chosen/project'];
+      if (command === 'project_file_exists') {
+        assert.deepEqual(payload, { projectId: 7, path: 'target/catalog.json' });
+        return false;
+      }
       if (payload?.path === 'models/missing.sql') throw new Error('read failed');
       assert.deepEqual(payload, { projectId: 7, path: 'models/orders.sql' });
       return new TextEncoder().encode('select 1').buffer;
@@ -63,11 +86,12 @@ test('desktop selection reads only through the project commands and propagates e
     const project = await chooseDesktopProject();
     assert.ok(project);
     assert.equal(await project.readFile('models/orders.sql'), 'select 1');
+    assert.equal(await project.hasFile('target/catalog.json'), false);
     await assert.rejects(project.readFile('models/missing.sql'), /read failed/);
     await assert.rejects(project.readFile('../secret'), /invalid or outside/);
     cancel = true;
     assert.equal(await chooseDesktopProject(), null);
-    assert.deepEqual(calls, ['choose_project', 'read_project_file', 'read_project_file', 'choose_project']);
+    assert.deepEqual(calls, ['choose_project', 'read_project_file', 'project_file_exists', 'read_project_file', 'choose_project']);
   } finally {
     Reflect.deleteProperty(globalThis, 'window');
   }

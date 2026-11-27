@@ -2,8 +2,9 @@ import { useRef } from 'react';
 import type { FormEvent } from 'react';
 import { ArrowUpRight, FileJson, FolderOpen, X } from 'lucide-react';
 
-export function ImportDialog({ hasGraph, error, status, desktop, onClose, onSubmit, onManifest, onCatalog, onProject, onProjectFiles, onUnsupported }: {
+export function ImportDialog({ hasGraph, hasCatalog, error, status, desktop, onClose, onSubmit, onManifest, onCatalog, onProject, onProjectFiles, onUnsupported }: {
   hasGraph: boolean;
+  hasCatalog: boolean;
   error: string;
   status: string;
   desktop: boolean;
@@ -16,6 +17,7 @@ export function ImportDialog({ hasGraph, error, status, desktop, onClose, onSubm
   onUnsupported: () => void;
 }) {
   const folderInput = useRef<HTMLInputElement | null>(null);
+  const catalogInput = useRef<HTMLInputElement | null>(null);
   const chooseFolder = () => {
     if (desktop) { onProject(); return; }
     const input = folderInput.current;
@@ -30,7 +32,7 @@ export function ImportDialog({ hasGraph, error, status, desktop, onClose, onSubm
     {!desktop && <input ref={(element) => { folderInput.current = element; element?.setAttribute('webkitdirectory', ''); }} className="folder-input" type="file" multiple tabIndex={-1} aria-hidden="true"
       onChange={(event) => { if (event.target.files?.length) onProjectFiles(event.target.files); event.target.value = ''; }} />}
     <div className="import-divider">OR SELECT ARTIFACTS</div>
-    <form onSubmit={onSubmit}><label className="file-label">Manifest <span>Required</span><input type="file" accept=".json,application/json" onChange={(event) => onManifest(event.target.files?.[0] || null)} /></label><label className="file-label">Catalog <span>Required</span><input type="file" accept=".json,application/json" onChange={(event) => onCatalog(event.target.files?.[0] || null)} /></label><button className="submit-button" type="submit" disabled={Boolean(status)}>{status || 'Explore lineage'} <ArrowUpRight size={16} /></button></form>
-    <small>Generate artifacts with <code>dbt compile</code> and <code>dbt docs generate</code>.</small>
+    <form onSubmit={onSubmit}><label className="file-label">Manifest <span>Required</span><input type="file" accept=".json,application/json" onChange={(event) => onManifest(event.target.files?.[0] || null)} /></label><label className="file-label">Catalog <span>Optional</span><input ref={catalogInput} type="file" accept=".json,application/json" onChange={(event) => onCatalog(event.target.files?.[0] || null)} /></label>{hasCatalog && <button className="clear-catalog" type="button" onClick={() => { if (catalogInput.current) catalogInput.current.value = ''; onCatalog(null); }}>Remove catalog</button>}<button className="submit-button" type="submit" disabled={Boolean(status)}>{status || 'Explore lineage'} <ArrowUpRight size={16} /></button></form>
+    <small>Generate a manifest with <code>dbt compile</code>. An optional catalog adds warehouse column metadata; generate it with <code>dbt docs generate</code>.</small>
   </div></div>;
 }

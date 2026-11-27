@@ -20,6 +20,13 @@ test('builds supported nodes, merges catalog columns, and deduplicates dependenc
   assert.deepEqual(graph.children['model.p.a'], ['model.p.b']);
 });
 
+test('builds lineage and manifest columns without a catalog', () => {
+  const graph = buildLineage(manifest);
+  assert.deepEqual(graph.parents['model.p.a'], ['source.p.s']);
+  assert.deepEqual(graph.children['model.p.a'], ['model.p.b']);
+  assert.deepEqual(graph.resources['model.p.a'].columns, [{ name: 'id' }]);
+});
+
 test('expands and folds upstream and downstream independently', () => {
   const graph = buildLineage(manifest, catalog);
   const expanded = { upstream: new Set(['model.p.a']), downstream: new Set(['model.p.a']) };
@@ -77,4 +84,5 @@ test('allows expanding beyond four levels', () => {
 test('rejects invalid artifacts', () => {
   assert.throws(() => buildLineage({}, catalog), /manifest/);
   assert.throws(() => buildLineage(manifest, {}), /catalog/);
+  assert.throws(() => buildLineage(manifest, null), /catalog/);
 });
