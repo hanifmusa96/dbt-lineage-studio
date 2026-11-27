@@ -32,7 +32,7 @@ jobs:
             bundle: nsis
             path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
