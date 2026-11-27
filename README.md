@@ -12,7 +12,7 @@ Explore your dbt project's data lineage locally, in a desktop app or a browser. 
 
 ## Prerequisites
 
-- Node.js **22.18 or newer** and npm.
+- Node.js **24 or newer** and npm. If you use nvm, run `nvm install` and `nvm use` in the project directory to use the version in `.nvmrc`.
 - A dbt `manifest.json`. A `catalog.json` is optional and adds warehouse column metadata.
 - For the desktop app, Rust and the [Tauri platform prerequisites](https://v2.tauri.app/start/prerequisites/).
 
