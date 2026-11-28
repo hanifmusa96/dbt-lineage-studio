@@ -52,6 +52,7 @@ jobs:
       - run: npm run tauri -- build --debug --no-bundle
 
   browser:
+    needs: test
     name: Browser smoke tests
     runs-on: ubuntu-latest
     steps:

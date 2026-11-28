@@ -18,7 +18,7 @@ export function ExportControls({ graph, rootId, theme, neighborhood, getNodes, e
   neighborhood: Neighborhood;
   getNodes: () => Pick<Node, 'id' | 'position' | 'measured'>[];
   edges: Pick<Edge, 'id'>[];
-  canvasRef: RefObject<HTMLDivElement>;
+  canvasRef: RefObject<HTMLDivElement | null>;
   ready: boolean;
   onError: (message: string) => void;
 }) {
