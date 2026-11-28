@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag of the Release Please draft release
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -33,6 +39,8 @@ jobs:
             path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -40,7 +48,7 @@ jobs:
       - name: Validate release version
         shell: bash
         env:
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ inputs.tag || github.ref_name }}
         run: |
           node -e 'const fs = require("node:fs"); const version = require("./package.json").version; const tauri = require("./src-tauri/tauri.conf.json").version; const cargo = fs.readFileSync("src-tauri/Cargo.toml", "utf8").match(/^version\s*=\s*"([^"]+)"/m)?.[1]; if (process.env.TAG_NAME !== `v${version}` || tauri !== version || cargo !== version) { console.error("Tag, package.json, tauri.conf.json and Cargo.toml versions must match."); process.exit(1); }'
       - uses: dtolnay/rust-toolchain@stable
@@ -69,9 +77,23 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           path: installers
-      - name: Create draft release
+      - name: Create draft release for a manually pushed tag
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG_NAME: ${{ github.ref_name }}
-        run: gh release create "$TAG_NAME" installers/*/* --draft --verify-tag --title "Lineage Studio $TAG_NAME" --notes "Unsigned installers. macOS builds are ad-hoc signed, not notarized; Windows builds are unsigned."
+        run: gh release create "$TAG_NAME" installers/*/* --draft --verify-tag --title "Lineage Studio $TAG_NAME" --generate-notes --notes "Unsigned installers. macOS builds are ad-hoc signed, not notarized; Windows builds are unsigned."
+      - name: Upload installers to the Release Please draft
+        if: github.event_name == 'workflow_call'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ inputs.tag }}
+        run: |
+          warning="Unsigned installers. macOS builds are ad-hoc signed, not notarized; Windows builds are unsigned."
+          notes="$(gh release view "$TAG_NAME" --json body --jq .body)"
+          if [[ "$notes" != *"$warning"* ]]; then
+            gh release edit "$TAG_NAME" --notes "${notes}"$'\n\n'"${warning}"
+          fi
+          gh release upload "$TAG_NAME" installers/*/* --clobber

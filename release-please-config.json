@@ -1,0 +1,28 @@
+{
+  "bootstrap-sha": "26b6e187bebdf6c6e354f112fd666535da494b94",
+  "include-component-in-tag": false,
+  "draft": true,
+  "force-tag-creation": true,
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "src-tauri/tauri.conf.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "toml",
+          "path": "src-tauri/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "src-tauri/Cargo.lock",
+          "jsonpath": "$.package[?(@.name.value == 'lineage-studio')].version"
+        }
+      ]
+    }
+  }
+}
